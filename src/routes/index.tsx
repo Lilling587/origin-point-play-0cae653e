@@ -1754,13 +1754,23 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
   let leadChanges = 0;
   let lastLeader: "home" | "away" | "tie" = "tie";
   let largestLead = 0;
+  let largestLeadLeader: "home" | "away" | null = null;
+  let largestLeadGoal: (typeof recap.goals)[number] | null = null;
+  let largestLeadHome = 0;
+  let largestLeadAway = 0;
   runningHome = 0;
   runningAway = 0;
   for (const g of recap.goals) {
     if (homeCode && g.teamCode === homeCode) runningHome += 1;
     else runningAway += 1;
     const diff = runningHome - runningAway;
-    if (Math.abs(diff) > largestLead) largestLead = Math.abs(diff);
+    if (Math.abs(diff) > largestLead) {
+      largestLead = Math.abs(diff);
+      largestLeadLeader = diff > 0 ? "home" : "away";
+      largestLeadGoal = g;
+      largestLeadHome = runningHome;
+      largestLeadAway = runningAway;
+    }
     const leader: "home" | "away" | "tie" =
       diff > 0 ? "home" : diff < 0 ? "away" : "tie";
     if (leader !== "tie" && lastLeader !== "tie" && leader !== lastLeader) {
