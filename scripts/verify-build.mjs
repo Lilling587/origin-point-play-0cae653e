@@ -34,7 +34,7 @@ async function getOldestTimestamp(dir) {
 
 async function main() {
   const [srcNewest, distOldest] = await Promise.all([
-    getNewestTimestamp(SRC),
+    getNewestTimestamp(SRC, { ignore: ["routeTree.gen.ts"] }),
     getOldestTimestamp(DIST),
   ]);
 
