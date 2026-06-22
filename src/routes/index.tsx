@@ -1138,8 +1138,8 @@ function PeriodGoalsCard({
       <CardContent>
         {refreshing ? (
           <div className="space-y-3">
-            <div className="grid grid-cols-5 gap-2 sm:gap-4">
-              {[0, 1, 2, 3, 4].map((i) => (
+            <div className="grid grid-cols-4 gap-2 sm:gap-4">
+              {[0, 1, 2, 3].map((i) => (
                 <div key={i} className="space-y-1 text-center">
                   <Skeleton className="mx-auto h-7 w-8" />
                   <Skeleton className="mx-auto h-3 w-6" />
@@ -1154,15 +1154,13 @@ function PeriodGoalsCard({
           <p className="text-sm text-muted-foreground">Inte tillgängligt.</p>
         ) : (
           <>
-            <div className="grid grid-cols-5 gap-2 sm:gap-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
               {(() => {
                 const best = strongestPeriod(team);
                 return ([
                   ["P1", pg.p1],
                   ["P2", pg.p2],
                   ["P3", pg.p3],
-                  ["OT", pg.ot ?? 0],
-                  ["GWS", pg.gws ?? 0],
                 ] as const).map(([label, value]) => (
                   <div
                     key={label}
@@ -2733,8 +2731,6 @@ function strongestPeriod(team: Briefing["home"]): { label: string; perGame: numb
     ["P1", pg.p1 / pg.games],
     ["P2", pg.p2 / pg.games],
     ["P3", pg.p3 / pg.games],
-    ["OT", (pg.ot ?? 0) / pg.games],
-    ["GWS", (pg.gws ?? 0) / pg.games],
   ];
   entries.sort((a, b) => b[1] - a[1]);
   return { label: entries[0][0], perGame: entries[0][1] };

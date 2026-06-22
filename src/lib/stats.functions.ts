@@ -62,7 +62,6 @@ const PeriodGoals = z.object({
   p2: z.number().int().min(0),
   p3: z.number().int().min(0),
   ot: z.number().int().min(0),
-  gws: z.number().int().min(0),
   total: z.number().int().min(0),
   games: z.number().int().min(0),
 });
