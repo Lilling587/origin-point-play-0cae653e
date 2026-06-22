@@ -1581,9 +1581,22 @@ export async function fetchLastMeetingRecap(
   if (!meeting) return null;
   const gameId = meeting.g.id!;
   const gameUrl = `${STATS_BASE_URL}/Game/Events/${gameId}`;
-  const goals: LastMeetingRecap["goals"] = [];
-  let wentToOvertime = false;
-  let wentToShootout = false;
+  // Single typed construction site for the recap. Every field on
+  // LastMeetingRecap must be supplied here, so adding a new required field
+  // to the type fails the build at exactly one place — the parser below
+  // mutates `result` in place and never re-creates the object.
+  const result: LastMeetingRecap = {
+    date: meeting.g.date,
+    seasonLabel: meeting.seasonLabel,
+    homeTeam: meeting.g.homeTeam,
+    awayTeam: meeting.g.awayTeam,
+    homeGoals: meeting.g.homeGoals!,
+    awayGoals: meeting.g.awayGoals!,
+    gameUrl,
+    goals: [],
+    wentToOvertime: false,
+    wentToShootout: false,
+  };
   try {
     const res = await fetch(gameUrl, {
       headers: { "user-agent": "Mozilla/5.0", "cache-control": "no-cache" },
@@ -1621,8 +1634,8 @@ export async function fetchLastMeetingRecap(
         const p = headerToPeriod(h3[1]);
         if (p) {
           currentPeriod = p;
-          if (p === "OT") wentToOvertime = true;
-          if (p === "SO") wentToShootout = true;
+          if (p === "OT") result.wentToOvertime = true;
+          if (p === "SO") result.wentToShootout = true;
         }
         continue;
       }
@@ -1645,7 +1658,7 @@ export async function fetchLastMeetingRecap(
         const nm = inner.match(namePartRe);
         if (nm) assists.push(cleanName(nm[1]));
       }
-      goals.push({ teamCode, scorer, assists, period: currentPeriod, time });
+      result.goals.push({ teamCode, scorer, assists, period: currentPeriod, time });
     }
     // Headers appear in document order (3rd, 2nd, 1st in this feed), so the
     // collected goals are reverse-chronological per period. Sort chronologically
@@ -1656,7 +1669,7 @@ export async function fetchLastMeetingRecap(
       const m = t.match(/^(\d+):(\d+)/);
       return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0;
     };
-    goals.sort((a, b) => {
+    result.goals.sort((a, b) => {
       const pa = periodRank[a.period ?? ""] ?? 99;
       const pb = periodRank[b.period ?? ""] ?? 99;
       if (pa !== pb) return pa - pb;
@@ -1665,18 +1678,7 @@ export async function fetchLastMeetingRecap(
   } catch (err) {
     console.warn(`[lastMeeting] event page failed:`, (err as Error).message);
   }
-  return {
-    date: meeting.g.date,
-    seasonLabel: meeting.seasonLabel,
-    homeTeam: meeting.g.homeTeam,
-    awayTeam: meeting.g.awayTeam,
-    homeGoals: meeting.g.homeGoals!,
-    awayGoals: meeting.g.awayGoals!,
-    gameUrl,
-    goals,
-    wentToOvertime,
-    wentToShootout,
-  };
+  return result;
 }
 
 export type SeasonTrajectory = {
