@@ -1648,8 +1648,46 @@ function AllTimeH2HBody({
 
 function PostgameRecapCard({ home, away }: { home: string; away: string }) {
   const query = useQuery(lastMeetingOptions(home, away));
+  const queryClient = useQueryClient();
+  const [forcing, setForcing] = useState(false);
+  const handleGameFinished = async () => {
+    setForcing(true);
+    try {
+      const fresh = await getLastMeetingRecap({ data: { home, away, force: true } });
+      queryClient.setQueryData(["lastMeeting", home, away], fresh);
+    } finally {
+      setForcing(false);
+    }
+  };
   const recap = query.data as LastMeetingRecapResult;
-  if (!recap) return null;
+  if (!recap) {
+    return (
+      <Card className="border-dashed">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+              Postgame
+            </Badge>
+            Match avslutad?
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            Tryck när matchen är slutspelad så hämtas en färsk recap med aktuell statistik.
+          </p>
+          <Button size="sm" onClick={handleGameFinished} disabled={forcing}>
+            {forcing ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Match avslutad – hämta recap
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
 
   type Tally = { goals: number; assists: number; teamCode: string };
   const tally = new Map<string, Tally>();
