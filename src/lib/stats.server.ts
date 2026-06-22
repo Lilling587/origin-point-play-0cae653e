@@ -1582,6 +1582,8 @@ export async function fetchLastMeetingRecap(
   const gameId = meeting.g.id!;
   const gameUrl = `${STATS_BASE_URL}/Game/Events/${gameId}`;
   const goals: LastMeetingRecap["goals"] = [];
+  let wentToOvertime = false;
+  let wentToShootout = false;
   try {
     const res = await fetch(gameUrl, {
       headers: { "user-agent": "Mozilla/5.0", "cache-control": "no-cache" },
