@@ -1845,13 +1845,45 @@ function PostgameRecapCard({
   for (const p of ["1", "2", "3"] as PeriodKey[]) {
     periodScores.set(p, { home: 0, away: 0 });
   }
+  let sawOtGoal = false;
+  let sawSoGoal = false;
   for (const g of recap.goals) {
     const k = normalizePeriod(g.period);
     if (!k) continue;
+    if (k === "OT") sawOtGoal = true;
+    if (k === "SO") sawSoGoal = true;
     const slot = periodScores.get(k) ?? { home: 0, away: 0 };
     if (homeCode && g.teamCode === homeCode) slot.home += 1;
     else slot.away += 1;
     periodScores.set(k, slot);
+  }
+  // Infer OT / GWS rows when the final score exceeds the sum of recorded
+  // period goals (shootout deciders, and occasionally OT goals, are missing
+  // from the event feed). One extra goal → assign to the winner.
+  {
+    let sumHome = 0;
+    let sumAway = 0;
+    for (const s of periodScores.values()) {
+      sumHome += s.home;
+      sumAway += s.away;
+    }
+    const extraHome = Math.max(0, recap.homeGoals - sumHome);
+    const extraAway = Math.max(0, recap.awayGoals - sumAway);
+    if (extraHome > 0 || extraAway > 0) {
+      const targetKey: PeriodKey = sawSoGoal
+        ? "SO"
+        : sawOtGoal
+          ? "OT"
+          : // No explicit marker: a single extra goal to one side is the
+            // classic GWS pattern; otherwise treat as OT.
+            extraHome + extraAway === 1
+            ? "SO"
+            : "OT";
+      const slot = periodScores.get(targetKey) ?? { home: 0, away: 0 };
+      slot.home += extraHome;
+      slot.away += extraAway;
+      periodScores.set(targetKey, slot);
+    }
   }
   const periodsPlayed = periodOrder.filter((p) => periodScores.has(p));
 
