@@ -1613,8 +1613,6 @@ export async function fetchLastMeetingRecap(
       return null;
     };
     let currentPeriod: string | null = null;
-    let wentToOvertime = false;
-    let wentToShootout = false;
     let tr: RegExpExecArray | null;
     while ((tr = trRe.exec(html)) !== null) {
       const row = tr[1];
