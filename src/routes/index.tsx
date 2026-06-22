@@ -339,27 +339,34 @@ function Dashboard() {
       className="min-h-screen bg-background"
     >
       <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-start justify-between gap-4 px-6 py-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">
               {favorite || "Grästorps IK"} — Producent-statistik
             </h1>
             <p className="text-sm text-muted-foreground">
               HockeyEttan Södra · matchstatistik för kommentatorer
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <TabsList>
-              <TabsTrigger value="briefing">Matchbriefing</TabsTrigger>
-              <TabsTrigger value="recap">Postgame recap</TabsTrigger>
+          <div className="flex flex-wrap items-center gap-2">
+            <TabsList className="w-full sm:w-auto">
+              <TabsTrigger value="briefing" className="flex-1 sm:flex-initial">
+                <span className="sm:hidden">Briefing</span>
+                <span className="hidden sm:inline">Matchbriefing</span>
+              </TabsTrigger>
+              <TabsTrigger value="recap" className="flex-1 sm:flex-initial">
+                <span className="sm:hidden">Recap</span>
+                <span className="hidden sm:inline">Postgame recap</span>
+              </TabsTrigger>
             </TabsList>
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-initial">
               <Link to="/compare">
-                <Scale className="mr-2 h-4 w-4" />
-                Jämför lag
+                <Scale className="mr-2 h-4 w-4 shrink-0" />
+                <span className="sm:hidden">Jämför</span>
+                <span className="hidden sm:inline">Jämför lag</span>
               </Link>
             </Button>
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-initial">
               <Link to="/notifications">Notiser</Link>
             </Button>
           </div>
