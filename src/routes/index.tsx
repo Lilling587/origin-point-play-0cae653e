@@ -27,7 +27,7 @@ import type {
 } from "@/lib/stats.functions";
 
 import { Input } from "@/components/ui/input";
-import { AlertCircle, Check, X, Info, Star, ImageDown, Scale } from "lucide-react";
+import { AlertCircle, Check, X, Info, Star, ImageDown, Scale, ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -527,7 +527,13 @@ function Dashboard() {
         </TabsContent>
 
         <TabsContent value="recap" className="mt-0">
-          {canLoad ? <PostgameRecapCard home={home} away={selectedAway} /> : null}
+          {canLoad ? (
+            <PostgameRecapCard
+              home={home}
+              away={selectedAway}
+              onBackToBriefing={() => setActiveTab("briefing")}
+            />
+          ) : null}
         </TabsContent>
 
       </main>
@@ -1674,7 +1680,15 @@ function todayInStockholm(): string {
   return `${y}-${m}-${d}`;
 }
 
-function PostgameRecapCard({ home, away }: { home: string; away: string }) {
+function PostgameRecapCard({
+  home,
+  away,
+  onBackToBriefing,
+}: {
+  home: string;
+  away: string;
+  onBackToBriefing: () => void;
+}) {
   const query = useQuery(lastMeetingOptions(home, away));
   const queryClient = useQueryClient();
   const [forcing, setForcing] = useState(false);
@@ -1740,18 +1754,29 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
             Match avslutad?
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
-            Tryck när matchen är slutspelad så hämtas en färsk recap med aktuell statistik.
-          </p>
-          <Button size="sm" onClick={handleGameFinished} disabled={forcing}>
-            {forcing ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="mr-2 h-4 w-4" />
-            )}
-            Match avslutad – hämta recap
+        <CardContent className="space-y-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2 h-8 gap-1 text-muted-foreground hover:text-foreground"
+            onClick={onBackToBriefing}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Tillbaka till briefing
           </Button>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              Tryck när matchen är slutspelad så hämtas en färsk recap med aktuell statistik.
+            </p>
+            <Button size="sm" onClick={handleGameFinished} disabled={forcing}>
+              {forcing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 h-4 w-4" />
+              )}
+              Match avslutad – hämta recap
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -1921,6 +1946,15 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
       </CardHeader>
 
       <CardContent className="space-y-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 h-8 gap-1 text-muted-foreground hover:text-foreground"
+          onClick={onBackToBriefing}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Tillbaka till briefing
+        </Button>
         <div className="flex flex-wrap items-baseline gap-2">
           <div className="text-base inline-flex items-baseline gap-4">
             <span className="font-medium">{recap.homeTeam}</span>
