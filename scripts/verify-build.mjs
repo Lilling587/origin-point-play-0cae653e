@@ -5,11 +5,13 @@ import path from "node:path";
 const DIST = "dist";
 const SRC = "src";
 
-async function getNewestTimestamp(dir) {
+async function getNewestTimestamp(dir, { ignore = [] } = {}) {
   let newest = 0;
   const entries = await readdir(dir, { withFileTypes: true, recursive: true });
   for (const entry of entries) {
     if (!entry.isFile()) continue;
+    const relativePath = path.relative(dir, path.join(entry.path || dir, entry.name));
+    if (ignore.includes(relativePath)) continue;
     const fullPath = path.join(entry.path || dir, entry.name);
     const { mtimeMs } = await stat(fullPath);
     if (mtimeMs > newest) newest = mtimeMs;
