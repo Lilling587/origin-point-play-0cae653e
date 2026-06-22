@@ -1682,6 +1682,9 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
     .map(([name, v]) => ({ name, ...v, points: v.goals + v.assists }))
     .sort((a, b) => (b.points !== a.points ? b.points - a.points : b.goals - a.goals))
     .slice(0, 5);
+  const hatTricks = [...tally.entries()]
+    .filter(([, v]) => v.goals >= 3)
+    .map(([name, v]) => ({ name, goals: v.goals, teamCode: v.teamCode }));
 
   const winner =
     recap.homeGoals > recap.awayGoals
@@ -1692,6 +1695,81 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
   const headline = winner
     ? `${winner} vann ${Math.max(recap.homeGoals, recap.awayGoals)}–${Math.min(recap.homeGoals, recap.awayGoals)}`
     : `Oavgjort ${recap.homeGoals}–${recap.awayGoals}`;
+
+  // Map team code -> team name (home/away) by counting per-team goals
+  const homeCode = (() => {
+    const counts = new Map<string, number>();
+    for (const g of recap.goals) counts.set(g.teamCode, (counts.get(g.teamCode) ?? 0) + 1);
+    // Pair codes with totals: the code whose count matches homeGoals wins
+    for (const [code, n] of counts) if (n === recap.homeGoals && code) return code;
+    return null;
+  })();
+
+  // Period-by-period scoring
+  const periodOrder = ["1", "2", "3", "OT", "SO"] as const;
+  type PeriodKey = (typeof periodOrder)[number];
+  const normalizePeriod = (p: string | null): PeriodKey | null => {
+    if (!p) return null;
+    const s = p.trim().toUpperCase();
+    if (s.startsWith("1")) return "1";
+    if (s.startsWith("2")) return "2";
+    if (s.startsWith("3")) return "3";
+    if (s.includes("OT") || s.includes("ÖVERTID") || s.includes("EXTRA")) return "OT";
+    if (s.includes("SO") || s.includes("STRAFF")) return "SO";
+    return null;
+  };
+  const periodScores = new Map<PeriodKey, { home: number; away: number }>();
+  for (const g of recap.goals) {
+    const k = normalizePeriod(g.period);
+    if (!k) continue;
+    const slot = periodScores.get(k) ?? { home: 0, away: 0 };
+    if (homeCode && g.teamCode === homeCode) slot.home += 1;
+    else slot.away += 1;
+    periodScores.set(k, slot);
+  }
+  const periodsPlayed = periodOrder.filter((p) => periodScores.has(p));
+
+  // First goal & game-winning goal
+  const firstGoal = recap.goals[0] ?? null;
+  let runningHome = 0;
+  let runningAway = 0;
+  let gwgIdx = -1;
+  const finalWinnerIsHome = recap.homeGoals > recap.awayGoals;
+  const finalWinnerIsAway = recap.awayGoals > recap.homeGoals;
+  const losingTotal = finalWinnerIsHome
+    ? recap.awayGoals
+    : finalWinnerIsAway
+      ? recap.homeGoals
+      : -1;
+  for (let i = 0; i < recap.goals.length; i++) {
+    const g = recap.goals[i];
+    if (homeCode && g.teamCode === homeCode) runningHome += 1;
+    else runningAway += 1;
+    if (finalWinnerIsHome && runningHome === losingTotal + 1 && gwgIdx === -1) gwgIdx = i;
+    if (finalWinnerIsAway && runningAway === losingTotal + 1 && gwgIdx === -1) gwgIdx = i;
+  }
+  const gwg = gwgIdx >= 0 ? recap.goals[gwgIdx] : null;
+
+  // Lead changes & largest lead
+  let leadChanges = 0;
+  let lastLeader: "home" | "away" | "tie" = "tie";
+  let largestLead = 0;
+  runningHome = 0;
+  runningAway = 0;
+  for (const g of recap.goals) {
+    if (homeCode && g.teamCode === homeCode) runningHome += 1;
+    else runningAway += 1;
+    const diff = runningHome - runningAway;
+    if (Math.abs(diff) > largestLead) largestLead = Math.abs(diff);
+    const leader: "home" | "away" | "tie" =
+      diff > 0 ? "home" : diff < 0 ? "away" : "tie";
+    if (leader !== "tie" && lastLeader !== "tie" && leader !== lastLeader) {
+      leadChanges += 1;
+    }
+    if (leader !== "tie") lastLeader = leader;
+  }
+
+  const formatTime = (t: string | null) => (t ? t.replace(/\s+/g, "") : "");
 
   return (
     <Card className="border-primary/40 bg-primary/5">
@@ -1714,6 +1792,81 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
           </div>
           <span className="text-sm font-medium text-primary">{headline}</span>
         </div>
+
+        {periodsPlayed.length > 0 && (
+          <div>
+            <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
+              Per period
+            </div>
+            <div className="flex flex-wrap gap-2 text-sm">
+              {periodsPlayed.map((p) => {
+                const s = periodScores.get(p)!;
+                return (
+                  <div
+                    key={p}
+                    className="rounded-md border border-border/60 bg-background/40 px-2 py-1 font-mono text-xs tabular-nums"
+                  >
+                    <span className="mr-1 text-muted-foreground">P{p}</span>
+                    {s.home}–{s.away}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+          {firstGoal && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                Första målet
+              </div>
+              <div className="font-medium">{firstGoal.teamCode}</div>
+              <div className="truncate text-xs text-muted-foreground">
+                {firstGoal.scorer}
+                {firstGoal.time ? ` · ${formatTime(firstGoal.time)}` : ""}
+              </div>
+            </div>
+          )}
+          {gwg && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                Avgörande mål
+              </div>
+              <div className="font-medium">{gwg.teamCode}</div>
+              <div className="truncate text-xs text-muted-foreground">
+                {gwg.scorer}
+                {gwg.time ? ` · P${normalizePeriod(gwg.period) ?? "?"} ${formatTime(gwg.time)}` : ""}
+              </div>
+            </div>
+          )}
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Största ledning
+            </div>
+            <div className="font-mono text-base tabular-nums">+{largestLead}</div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Ledningsbyten
+            </div>
+            <div className="font-mono text-base tabular-nums">{leadChanges}</div>
+          </div>
+        </div>
+
+        {hatTricks.length > 0 && (
+          <div className="rounded-md border border-primary/30 bg-primary/10 px-2 py-1 text-xs">
+            <span className="mr-1 font-semibold uppercase tracking-wide text-primary">
+              Hat-trick
+            </span>
+            {hatTricks.map((h, i) => (
+              <span key={h.name}>
+                {i > 0 ? ", " : ""}
+                {h.name} ({h.teamCode}, {h.goals}M)
+              </span>
+            ))}
+          </div>
+        )}
 
         {topScorers.length === 0 ? (
           <p className="text-sm text-muted-foreground">Inga måldata tillgängliga ännu.</p>
@@ -1752,6 +1905,7 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
     </Card>
   );
 }
+
 
 function LastMeetingCard({ home, away }: { home: string; away: string }) {
 
