@@ -1826,13 +1826,24 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
   return (
     <Card className="border-primary/40 bg-primary/5">
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Badge variant="default" className="text-[10px] uppercase tracking-wide">
-            Senaste mötet
-          </Badge>
-          Postgame-recap · {recap.date}
-        </CardTitle>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Badge variant="default" className="text-[10px] uppercase tracking-wide">
+              Senaste mötet
+            </Badge>
+            Postgame-recap · {recap.date}
+          </CardTitle>
+          <Button size="sm" variant="outline" onClick={handleGameFinished} disabled={forcing}>
+            {forcing ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Match avslutad – uppdatera
+          </Button>
+        </div>
       </CardHeader>
+
       <CardContent className="space-y-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div className="text-base">
