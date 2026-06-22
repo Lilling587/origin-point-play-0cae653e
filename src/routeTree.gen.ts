@@ -9,38 +9,151 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as CompareRouteImport } from './routes/compare'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as IndexIndexRouteImport } from './routes/index.index'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as ApiPublicHooksPregameEmailsRouteImport } from './routes/api/public/hooks/pregame-emails'
+import { Route as ApiPublicHooksPostgameEmailsRouteImport } from './routes/api/public/hooks/postgame-emails'
 
+const CompareRoute = CompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IndexIndexRoute = IndexIndexRouteImport.update({
+  id: '/index/',
+  path: '/index/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const ApiPublicHooksPregameEmailsRoute =
+  ApiPublicHooksPregameEmailsRouteImport.update({
+    id: '/api/public/hooks/pregame-emails',
+    path: '/api/public/hooks/pregame-emails',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksPostgameEmailsRoute =
+  ApiPublicHooksPostgameEmailsRouteImport.update({
+    id: '/api/public/hooks/postgame-emails',
+    path: '/api/public/hooks/postgame-emails',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/compare': typeof CompareRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/index/': typeof IndexIndexRoute
+  '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
+  '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/compare': typeof CompareRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/index': typeof IndexIndexRoute
+  '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
+  '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/compare': typeof CompareRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/index/': typeof IndexIndexRoute
+  '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
+  '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/compare'
+    | '/notifications'
+    | '/index/'
+    | '/api/public/hooks/postgame-emails'
+    | '/api/public/hooks/pregame-emails'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/compare'
+    | '/notifications'
+    | '/index'
+    | '/api/public/hooks/postgame-emails'
+    | '/api/public/hooks/pregame-emails'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/compare'
+    | '/_authenticated/notifications'
+    | '/index/'
+    | '/api/public/hooks/postgame-emails'
+    | '/api/public/hooks/pregame-emails'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  CompareRoute: typeof CompareRoute
+  IndexIndexRoute: typeof IndexIndexRoute
+  ApiPublicHooksPostgameEmailsRoute: typeof ApiPublicHooksPostgameEmailsRoute
+  ApiPublicHooksPregameEmailsRoute: typeof ApiPublicHooksPregameEmailsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/compare': {
+      id: '/compare'
+      path: '/compare'
+      fullPath: '/compare'
+      preLoaderRoute: typeof CompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +161,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/index/': {
+      id: '/index/'
+      path: '/index'
+      fullPath: '/index/'
+      preLoaderRoute: typeof IndexIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/hooks/pregame-emails': {
+      id: '/api/public/hooks/pregame-emails'
+      path: '/api/public/hooks/pregame-emails'
+      fullPath: '/api/public/hooks/pregame-emails'
+      preLoaderRoute: typeof ApiPublicHooksPregameEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/postgame-emails': {
+      id: '/api/public/hooks/postgame-emails'
+      path: '/api/public/hooks/postgame-emails'
+      fullPath: '/api/public/hooks/postgame-emails'
+      preLoaderRoute: typeof ApiPublicHooksPostgameEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  CompareRoute: CompareRoute,
+  IndexIndexRoute: IndexIndexRoute,
+  ApiPublicHooksPostgameEmailsRoute: ApiPublicHooksPostgameEmailsRoute,
+  ApiPublicHooksPregameEmailsRoute: ApiPublicHooksPregameEmailsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
