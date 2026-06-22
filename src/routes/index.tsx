@@ -766,7 +766,7 @@ function BriefingView({
   };
 
   return (
-    <div className="space-y-6" id="briefing-capture">
+      <div className="space-y-6" id="briefing-capture">
       <div className="flex items-center justify-between" data-export-hide="true">
         <div className="text-xs text-muted-foreground">
           {cached ? "Cached" : "Fresh"} · fetched{" "}
@@ -793,8 +793,6 @@ function BriefingView({
           </Button>
         </div>
       </div>
-
-      <PostgameRecapCard home={data.home.name} away={data.away.name} />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <TeamHeader team={data.home} side="Hemmalag" />
