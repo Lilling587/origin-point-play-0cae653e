@@ -1886,6 +1886,13 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
               Senaste mötet
             </Badge>
             Postgame-recap · {recap.date}
+            {isTodaysGame && (
+              <span className="ml-1 text-[10px] font-normal text-muted-foreground">
+                {autoRefreshedAt
+                  ? `· auto-uppdaterad ${new Date(autoRefreshedAt).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}`
+                  : "· auto-uppdaterar var 3:e min"}
+              </span>
+            )}
           </CardTitle>
           <Button size="sm" variant="outline" onClick={handleGameFinished} disabled={forcing}>
             {forcing ? (
