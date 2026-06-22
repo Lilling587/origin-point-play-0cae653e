@@ -1611,13 +1611,19 @@ export async function fetchLastMeetingRecap(
       return null;
     };
     let currentPeriod: string | null = null;
+    let wentToOvertime = false;
+    let wentToShootout = false;
     let tr: RegExpExecArray | null;
     while ((tr = trRe.exec(html)) !== null) {
       const row = tr[1];
       const h3 = row.match(/<h3>([^<]+)<\/h3>/i);
       if (h3) {
         const p = headerToPeriod(h3[1]);
-        if (p) currentPeriod = p;
+        if (p) {
+          currentPeriod = p;
+          if (p === "OT") wentToOvertime = true;
+          if (p === "SO") wentToShootout = true;
+        }
         continue;
       }
       if (!/Total goals scored/i.test(row)) continue;
