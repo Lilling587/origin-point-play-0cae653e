@@ -1754,18 +1754,29 @@ function PostgameRecapCard({
             Match avslutad?
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
-            Tryck när matchen är slutspelad så hämtas en färsk recap med aktuell statistik.
-          </p>
-          <Button size="sm" onClick={handleGameFinished} disabled={forcing}>
-            {forcing ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="mr-2 h-4 w-4" />
-            )}
-            Match avslutad – hämta recap
+        <CardContent className="space-y-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2 h-8 gap-1 text-muted-foreground hover:text-foreground"
+            onClick={onBackToBriefing}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Tillbaka till briefing
           </Button>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              Tryck när matchen är slutspelad så hämtas en färsk recap med aktuell statistik.
+            </p>
+            <Button size="sm" onClick={handleGameFinished} disabled={forcing}>
+              {forcing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 h-4 w-4" />
+              )}
+              Match avslutad – hämta recap
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
