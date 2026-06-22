@@ -1645,24 +1645,11 @@ function AllTimeH2HBody({
   );
 }
 
-function todayInStockholm(): string {
-  const parts = new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Europe/Stockholm",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const y = parts.find((p) => p.type === "year")?.value ?? "";
-  const m = parts.find((p) => p.type === "month")?.value ?? "";
-  const d = parts.find((p) => p.type === "day")?.value ?? "";
-  return `${y}-${m}-${d}`;
-}
 
 function PostgameRecapCard({ home, away }: { home: string; away: string }) {
   const query = useQuery(lastMeetingOptions(home, away));
   const recap = query.data as LastMeetingRecapResult;
   if (!recap) return null;
-  if (recap.date !== todayInStockholm()) return null;
 
   type Tally = { goals: number; assists: number; teamCode: string };
   const tally = new Map<string, Tally>();
@@ -1786,7 +1773,7 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Badge variant="default" className="text-[10px] uppercase tracking-wide">
-            Slutspelat ikväll
+            Senaste mötet
           </Badge>
           Postgame-recap · {recap.date}
         </CardTitle>
