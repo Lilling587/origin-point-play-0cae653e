@@ -2733,6 +2733,8 @@ function strongestPeriod(team: Briefing["home"]): { label: string; perGame: numb
     ["P1", pg.p1 / pg.games],
     ["P2", pg.p2 / pg.games],
     ["P3", pg.p3 / pg.games],
+    ["OT", (pg.ot ?? 0) / pg.games],
+    ["GWS", (pg.gws ?? 0) / pg.games],
   ];
   entries.sort((a, b) => b[1] - a[1]);
   return { label: entries[0][0], perGame: entries[0][1] };
