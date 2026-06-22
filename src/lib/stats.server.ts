@@ -1674,6 +1674,8 @@ export async function fetchLastMeetingRecap(
     awayGoals: meeting.g.awayGoals!,
     gameUrl,
     goals,
+    wentToOvertime,
+    wentToShootout,
   };
 }
 
