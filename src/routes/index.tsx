@@ -1773,7 +1773,7 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Badge variant="default" className="text-[10px] uppercase tracking-wide">
-            Slutspelat ikväll
+            Senaste mötet
           </Badge>
           Postgame-recap · {recap.date}
         </CardTitle>
