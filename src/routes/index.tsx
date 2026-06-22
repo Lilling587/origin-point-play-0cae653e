@@ -1721,6 +1721,8 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
   let runningHome = 0;
   let runningAway = 0;
   let gwgIdx = -1;
+  let gwgHome = 0;
+  let gwgAway = 0;
   const finalWinnerIsHome = recap.homeGoals > recap.awayGoals;
   const finalWinnerIsAway = recap.awayGoals > recap.homeGoals;
   const losingTotal = finalWinnerIsHome
@@ -1732,8 +1734,16 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
     const g = recap.goals[i];
     if (homeCode && g.teamCode === homeCode) runningHome += 1;
     else runningAway += 1;
-    if (finalWinnerIsHome && runningHome === losingTotal + 1 && gwgIdx === -1) gwgIdx = i;
-    if (finalWinnerIsAway && runningAway === losingTotal + 1 && gwgIdx === -1) gwgIdx = i;
+    if (finalWinnerIsHome && runningHome === losingTotal + 1 && gwgIdx === -1) {
+      gwgIdx = i;
+      gwgHome = runningHome;
+      gwgAway = runningAway;
+    }
+    if (finalWinnerIsAway && runningAway === losingTotal + 1 && gwgIdx === -1) {
+      gwgIdx = i;
+      gwgHome = runningHome;
+      gwgAway = runningAway;
+    }
   }
   const gwg = gwgIdx >= 0 ? recap.goals[gwgIdx] : null;
 
@@ -1870,7 +1880,7 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
               <div className="font-medium">{gwg.teamCode}</div>
               <div className="truncate text-xs text-muted-foreground">
                 {gwg.scorer}
-                {gwg.time ? ` · Mål ${gwgIdx + 1} · P${normalizePeriod(gwg.period) ?? "?"} ${formatTime(gwg.time)}` : ""}
+                {gwg.time ? ` · ${gwgHome}-${gwgAway} · P${normalizePeriod(gwg.period) ?? "?"} ${formatTime(gwg.time)}` : ""}
               </div>
             </div>
           )}
