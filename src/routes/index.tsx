@@ -1771,9 +1771,6 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
       : recap.awayGoals > recap.homeGoals
         ? recap.awayTeam
         : null;
-  const headline = winner
-    ? `${winner} vann ${Math.max(recap.homeGoals, recap.awayGoals)}–${Math.min(recap.homeGoals, recap.awayGoals)}`
-    : `Oavgjort ${recap.homeGoals}–${recap.awayGoals}`;
 
   // Map team code -> team name (home/away) by counting per-team goals
   const homeCode = (() => {
