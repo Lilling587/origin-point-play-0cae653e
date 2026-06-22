@@ -1781,6 +1781,7 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
     }
     if (leader !== "tie") lastLeader = leader;
   }
+  const largestLeadTeamCode = largestLeadLeader === "home" ? homeCode : largestLeadLeader === "away" ? awayCode : null;
 
   const formatTime = (t: string | null) => (t ? t.replace(/\s+/g, "") : "");
 
