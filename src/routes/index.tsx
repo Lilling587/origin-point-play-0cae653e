@@ -1674,7 +1674,15 @@ function todayInStockholm(): string {
   return `${y}-${m}-${d}`;
 }
 
-function PostgameRecapCard({ home, away }: { home: string; away: string }) {
+function PostgameRecapCard({
+  home,
+  away,
+  onBackToBriefing,
+}: {
+  home: string;
+  away: string;
+  onBackToBriefing: () => void;
+}) {
   const query = useQuery(lastMeetingOptions(home, away));
   const queryClient = useQueryClient();
   const [forcing, setForcing] = useState(false);
