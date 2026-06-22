@@ -1646,19 +1646,73 @@ function AllTimeH2HBody({
 }
 
 
+function todayInStockholm(): string {
+  const parts = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Stockholm",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const y = parts.find((p) => p.type === "year")?.value ?? "";
+  const m = parts.find((p) => p.type === "month")?.value ?? "";
+  const d = parts.find((p) => p.type === "day")?.value ?? "";
+  return `${y}-${m}-${d}`;
+}
+
 function PostgameRecapCard({ home, away }: { home: string; away: string }) {
   const query = useQuery(lastMeetingOptions(home, away));
   const queryClient = useQueryClient();
   const [forcing, setForcing] = useState(false);
+  const [autoRefreshedAt, setAutoRefreshedAt] = useState<string | null>(null);
   const handleGameFinished = async () => {
     setForcing(true);
     try {
       const fresh = await getLastMeetingRecap({ data: { home, away, force: true } });
       queryClient.setQueryData(["lastMeeting", home, away], fresh);
+      setAutoRefreshedAt(new Date().toISOString());
     } finally {
       setForcing(false);
     }
   };
+  const today = todayInStockholm();
+  const recapData = query.data as LastMeetingRecapResult;
+  const isTodaysGame = !!recapData && recapData.date === today;
+  const initialSig = recapData
+    ? `${recapData.homeGoals}-${recapData.awayGoals}-${recapData.goals.length}`
+    : "";
+
+  // Auto-refresh a few minutes after the game shows Final (recap.date === today).
+  // The league feed marks the game as played once Final; we poll every 3 min and
+  // stop after 2 consecutive identical results (or after ~30 min).
+  useEffect(() => {
+    if (!isTodaysGame) return;
+    let stable = 0;
+    let attempts = 0;
+    let last = initialSig;
+    const tick = async () => {
+      attempts += 1;
+      try {
+        const fresh = await getLastMeetingRecap({
+          data: { home, away, force: true },
+        });
+        queryClient.setQueryData(["lastMeeting", home, away], fresh);
+        setAutoRefreshedAt(new Date().toISOString());
+        const sig = fresh
+          ? `${fresh.homeGoals}-${fresh.awayGoals}-${fresh.goals.length}`
+          : "";
+        if (sig === last) stable += 1;
+        else {
+          stable = 0;
+          last = sig;
+        }
+      } catch {
+        /* retry next tick */
+      }
+      if (stable >= 2 || attempts >= 10) clearInterval(handle);
+    };
+    const handle = setInterval(tick, 3 * 60 * 1000);
+    return () => clearInterval(handle);
+  }, [isTodaysGame, initialSig, home, away, queryClient]);
   const recap = query.data as LastMeetingRecapResult;
   if (!recap) {
     return (
