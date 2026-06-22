@@ -1650,7 +1650,6 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
   const query = useQuery(lastMeetingOptions(home, away));
   const recap = query.data as LastMeetingRecapResult;
   if (!recap) return null;
-  if (recap.date !== todayInStockholm()) return null;
 
   type Tally = { goals: number; assists: number; teamCode: string };
   const tally = new Map<string, Tally>();
