@@ -527,7 +527,13 @@ function Dashboard() {
         </TabsContent>
 
         <TabsContent value="recap" className="mt-0">
-          {canLoad ? <PostgameRecapCard home={home} away={selectedAway} /> : null}
+          {canLoad ? (
+            <PostgameRecapCard
+              home={home}
+              away={selectedAway}
+              onBackToBriefing={() => setActiveTab("briefing")}
+            />
+          ) : null}
         </TabsContent>
 
       </main>
