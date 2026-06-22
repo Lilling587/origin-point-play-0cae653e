@@ -2010,12 +2010,13 @@ function PostgameRecapCard({
             <div className="flex flex-wrap gap-2 text-sm">
               {periodsPlayed.map((p) => {
                 const s = periodScores.get(p)!;
+                const label = p === "OT" ? "OT" : p === "SO" ? "GWS" : `P${p}`;
                 return (
                   <div
                     key={p}
                     className="rounded-md border border-border/60 bg-background/40 px-2 py-1 font-mono text-xs tabular-nums"
                   >
-                    <span className="mr-1 text-muted-foreground">P{p}</span>
+                    <span className="mr-1 text-muted-foreground">{label}</span>
                     {s.home}–{s.away}
                   </div>
                 );
