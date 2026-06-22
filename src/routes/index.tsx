@@ -1870,7 +1870,7 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
               <div className="font-medium">{gwg.teamCode}</div>
               <div className="truncate text-xs text-muted-foreground">
                 {gwg.scorer}
-                {gwg.time ? ` · P${normalizePeriod(gwg.period) ?? "?"} ${formatTime(gwg.time)}` : ""}
+                {gwg.time ? ` · Mål ${gwgIdx + 1} · P${normalizePeriod(gwg.period) ?? "?"} ${formatTime(gwg.time)}` : ""}
               </div>
             </div>
           )}
