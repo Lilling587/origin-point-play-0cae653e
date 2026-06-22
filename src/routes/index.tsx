@@ -1881,13 +1881,16 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
     <Card className="border-primary/40 bg-primary/5">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-base flex items-center gap-2">
+          <CardTitle className="text-base flex flex-wrap items-center gap-2">
             <Badge variant="default" className="text-[10px] uppercase tracking-wide">
               Senaste mötet
             </Badge>
-            Postgame-recap · {recap.date}
+            <span>Postgame-recap · {recap.date}</span>
+            <span className="text-[10px] font-normal text-muted-foreground">
+              · uppdaterad {new Date(query.dataUpdatedAt).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}
+            </span>
             {isTodaysGame && (
-              <span className="ml-1 text-[10px] font-normal text-muted-foreground">
+              <span className="text-[10px] font-normal text-muted-foreground">
                 {autoRefreshedAt
                   ? `· auto-uppdaterad ${new Date(autoRefreshedAt).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}`
                   : "· auto-uppdaterar var 3:e min"}
