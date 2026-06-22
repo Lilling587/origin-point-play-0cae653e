@@ -324,6 +324,8 @@ export type LastMeetingRecapResult = {
     period: string | null;
     time: string | null;
   }>;
+  wentToOvertime: boolean;
+  wentToShootout: boolean;
 } | null;
 
 export const getLastMeetingRecap = createServerFn({ method: "POST" })
