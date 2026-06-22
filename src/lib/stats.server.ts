@@ -1596,14 +1596,32 @@ export async function fetchLastMeetingRecap(
         .replace(/&amp;/g, "&")
         .replace(/\s+/g, " ")
         .trim();
+    // The event table has no per-row period column; periods are separated by
+    // <h3>1st period</h3> / 2nd / 3rd / Overtime / Shootout headers. Track the
+    // current period as we walk the rows in document order.
+    const headerToPeriod = (s: string): string | null => {
+      const t = s.toLowerCase();
+      if (/1st\s*period|första/.test(t)) return "1";
+      if (/2nd\s*period|andra/.test(t)) return "2";
+      if (/3rd\s*period|tredje/.test(t)) return "3";
+      if (/overtime|över?tid|extra/.test(t)) return "OT";
+      if (/shoot.?out|game winning shots|straff/.test(t)) return "SO";
+      return null;
+    };
+    let currentPeriod: string | null = null;
     let tr: RegExpExecArray | null;
     while ((tr = trRe.exec(html)) !== null) {
       const row = tr[1];
+      const h3 = row.match(/<h3>([^<]+)<\/h3>/i);
+      if (h3) {
+        const p = headerToPeriod(h3[1]);
+        if (p) currentPeriod = p;
+        continue;
+      }
       if (!/Total goals scored/i.test(row)) continue;
       const cells = row.split(/<\/td>/i);
       if (cells.length < 4) continue;
-      const period = stripTags(cells[0]) || null;
-      const time = stripTags(cells[1]) || null;
+      const time = stripTags(cells[0]) || null;
       const teamCode = stripTags(cells[2]);
       if (!/^[A-ZÅÄÖ]{2,4}$/.test(teamCode)) continue;
       const scorerCell = cells[3];
@@ -1619,8 +1637,23 @@ export async function fetchLastMeetingRecap(
         const nm = inner.match(namePartRe);
         if (nm) assists.push(cleanName(nm[1]));
       }
-      goals.push({ teamCode, scorer, assists, period, time });
+      goals.push({ teamCode, scorer, assists, period: currentPeriod, time });
     }
+    // Headers appear in document order (3rd, 2nd, 1st in this feed), so the
+    // collected goals are reverse-chronological per period. Sort chronologically
+    // so downstream "first goal" / "GWG" running totals are correct.
+    const periodRank: Record<string, number> = { "1": 1, "2": 2, "3": 3, OT: 4, SO: 5 };
+    const toSec = (t: string | null) => {
+      if (!t) return 0;
+      const m = t.match(/^(\d+):(\d+)/);
+      return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0;
+    };
+    goals.sort((a, b) => {
+      const pa = periodRank[a.period ?? ""] ?? 99;
+      const pb = periodRank[b.period ?? ""] ?? 99;
+      if (pa !== pb) return pa - pb;
+      return toSec(a.time) - toSec(b.time);
+    });
   } catch (err) {
     console.warn(`[lastMeeting] event page failed:`, (err as Error).message);
   }
