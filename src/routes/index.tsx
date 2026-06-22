@@ -1896,6 +1896,9 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
               Största ledning
             </div>
             <div className="font-mono text-base tabular-nums">+{largestLead}</div>
+            <div className="truncate text-xs text-muted-foreground">
+              {largestLeadTeamCode ?? "–"}
+            </div>
           </div>
           <div>
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
