@@ -1,0 +1,482 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { DEFAULT_SEASON, getSeason, type Season } from "./seasons.config";
+
+async function resolveSeason(label?: string | null): Promise<Season> {
+  const fromConfig = getSeason(label);
+  // If the label exists in config we still let DB overrides win (e.g. a
+  // confirmed re-mapping). Always merge on every call so a freshly confirmed
+  // season is immediately usable without restarting the app.
+  if (!label) return fromConfig;
+  try {
+    const { getMergedSeasons } = await import("./seasons.server");
+    const merged = await getMergedSeasons();
+    return merged.find((s) => s.label === label) ?? fromConfig;
+  } catch {
+    return fromConfig;
+  }
+}
+
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6h
+const TEAMS_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+const CACHE_VERSION = "v10";
+const HISTORY_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+const LEAGUE_SLUG = "hockeyettan-sodra";
+
+function seasonCachePrefix(seasonLabel: string) {
+  return `${seasonLabel}:${LEAGUE_SLUG}:${CACHE_VERSION}`;
+}
+
+// ---------- Schemas ----------
+
+const GameResult = z.object({
+  date: z.string().nullable().transform((v) => v ?? ""),
+  opponent: z.string().nullable().transform((v) => v ?? ""),
+  score: z.string().nullable().transform((v) => v ?? ""),
+  result: z.enum(["W", "T", "L", "OTW", "OTL", "?"]).nullable().transform((v) => v ?? "?"),
+  isHome: z.boolean().nullable().default(null),
+});
+
+const Scorer = z.object({
+  name: z.string(),
+  goals: z.number().nullable(),
+  assists: z.number().nullable(),
+  points: z.number().nullable(),
+  gamesPlayed: z.number().nullable().default(null),
+});
+
+const VenueSplit = z.object({
+  results: z
+    .array(z.enum(["W", "T", "L", "OTW", "OTL"]))
+    .describe("Most recent first; full season's played games at this venue"),
+  streak: z
+    .object({
+      type: z.enum(["W", "T", "L"]),
+      count: z.number().int().min(1),
+    })
+    .nullable(),
+});
+
+const PeriodGoals = z.object({
+  p1: z.number().int().min(0),
+  p2: z.number().int().min(0),
+  p3: z.number().int().min(0),
+  ot: z.number().int().min(0),
+  total: z.number().int().min(0),
+  games: z.number().int().min(0),
+});
+
+const Goalie = z.object({
+  name: z.string(),
+  gamesPlayed: z.number().nullable(),
+  minutes: z.string().nullable(),
+  goalsAgainst: z.number().nullable(),
+  saves: z.number().nullable(),
+  shotsAgainst: z.number().nullable(),
+  savePct: z.number().nullable().describe("Save percentage as a percent number"),
+  gaa: z.number().nullable().describe("Goals against average per 60 min"),
+  shutouts: z.number().nullable(),
+  wins: z.number().nullable(),
+  losses: z.number().nullable(),
+});
+
+const TeamBriefing = z.object({
+  name: z.string(),
+  position: z.number().nullable().describe("Standing position in league"),
+  points: z.number().nullable(),
+  gamesPlayed: z.number().nullable(),
+  lastFive: z.array(GameResult).max(5),
+  topScorers: z.array(Scorer).max(5),
+  powerPlayPct: z.number().nullable().describe("PP% as a percent number"),
+  penaltyKillPct: z.number().nullable().describe("PK% as a percent number"),
+  venueForm: z
+    .object({ home: VenueSplit, away: VenueSplit })
+    .nullable()
+    .default(null)
+    .describe("Win/tie/loss streaks split by venue"),
+  periodGoals: PeriodGoals.nullable().default(null).describe("Season totals of goals scored per period"),
+  goalies: z.array(Goalie).max(5).default([]).describe("Goalies with playing time this season"),
+  hotPlayer: z
+    .object({
+      name: z.string(),
+      points: z.number().int().min(0),
+      goals: z.number().int().min(0),
+      assists: z.number().int().min(0),
+      games: z.number().int().min(1).describe("Number of recent games scanned"),
+    })
+    .nullable()
+    .default(null)
+    .describe("Top points scorer over the team's last played games"),
+  discipline: z
+    .object({
+      totalPim: z.number().int().min(0),
+      gamesPlayed: z.number().int().min(0),
+      perGame: z.number().min(0),
+      topOffenders: z
+        .array(
+          z.object({
+            name: z.string(),
+            pim: z.number().int().min(0),
+            gamesPlayed: z.number().int().min(0).nullable(),
+          }),
+        )
+        .max(5),
+    })
+    .nullable()
+    .default(null)
+    .describe("Season penalty-minutes totals and most-penalized players"),
+});
+
+const BriefingSchema = z.object({
+  league: z.string().default("HockeyEttan Södra"),
+  home: TeamBriefing,
+  away: TeamBriefing,
+  headToHead: z
+    .array(
+      z.object({
+        date: z.string(),
+        homeTeam: z.string(),
+        awayTeam: z.string(),
+        score: z.string(),
+        gameId: z.string().nullable().default(null),
+      }),
+    )
+    .describe("Previous meetings this season between these two teams"),
+  notes: z.string().describe("Short summary or caveats; empty string if none"),
+});
+
+export type Briefing = z.infer<typeof BriefingSchema>;
+
+const TeamsSchema = z.object({
+  teams: z.array(z.string()).min(4),
+});
+
+// ---------- Server FNs ----------
+
+export const listSeasons = createServerFn({ method: "GET" }).handler(async () => {
+  const { getMergedSeasons } = await import("./seasons.server");
+  const seasons = await getMergedSeasons();
+  const def = seasons[0] ?? DEFAULT_SEASON;
+  return { seasons, default: def };
+});
+
+export const listTeams = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({ season: z.string().optional() })
+      .parse(input ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const season = await resolveSeason(data.season);
+    const key = `${seasonCachePrefix(season.label)}:teams`;
+    const { getCached, setCached } = await import("./stats.server");
+    const cached = await getCached(key, TEAMS_TTL_MS);
+    if (cached) return cached as { teams: string[]; fetchedAt: string; season: string };
+
+    const { parseTeamsFromStandings } = await import("./stats.server");
+    const teams = await parseTeamsFromStandings("", season);
+    const payload = { teams, fetchedAt: new Date().toISOString(), season: season.label };
+    await setCached(key, payload);
+    return payload;
+  });
+
+export const getMatchupBriefing = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        home: z.string().min(1),
+        away: z.string().min(1),
+        season: z.string().optional(),
+        force: z.boolean().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const season = await resolveSeason(data.season);
+    const { getCached, setCached, buildBriefing } = await import(
+      "./stats.server"
+    );
+    const key = `${seasonCachePrefix(season.label)}:briefing:${data.home}__vs__${data.away}`.toLowerCase();
+    if (!data.force) {
+      const cached = await getCached(key, CACHE_TTL_MS);
+      if (cached) {
+        return {
+          ...(cached as { briefing: Briefing; fetchedAt: string }),
+          cached: true,
+          season: season.label,
+        };
+      }
+    }
+    const briefing = await buildBriefing(data.home, data.away, season);
+    const payload = { briefing, fetchedAt: new Date().toISOString() };
+    await setCached(key, payload);
+    return { ...payload, cached: false, season: season.label };
+  });
+
+// ---------- Season detection / confirmation ----------
+
+export const scanForNewSeasons = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({ force: z.boolean().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const { runSeasonScan } = await import("./seasons.server");
+    return runSeasonScan({ force: data.force });
+  });
+
+export const listPendingSeasons = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const { listPendingDetections } = await import("./seasons.server");
+    const pending = await listPendingDetections();
+    return { pending };
+  },
+);
+
+export const confirmSeasonDetection = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        competitionId: z.string().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { confirmDetection } = await import("./seasons.server");
+    await confirmDetection(data);
+    return { ok: true };
+  });
+
+export const dismissSeasonDetection = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const { dismissDetection } = await import("./seasons.server");
+    await dismissDetection(data.id);
+    return { ok: true };
+  });
+
+// Look up today's scheduled game (in Europe/Stockholm) from the league schedule.
+// Returns the matchup if one is on today, otherwise null.
+export const getTodaysMatchup = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({ season: z.string().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const season = await resolveSeason(data.season);
+    // Today in Europe/Stockholm as YYYY-MM-DD
+    const parts = new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Europe/Stockholm",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date());
+    const y = parts.find((p) => p.type === "year")?.value ?? "";
+    const m = parts.find((p) => p.type === "month")?.value ?? "";
+    const d = parts.find((p) => p.type === "day")?.value ?? "";
+    const today = `${y}-${m}-${d}`;
+    const { findMatchupOnDate } = await import("./stats.server");
+    const match = await findMatchupOnDate(season, today);
+    return { date: today, match, season: season.label };
+  });
+
+export { BriefingSchema, TeamsSchema };
+
+
+
+// ---------- Historical depth ----------
+
+export type AllTimeH2HResult = {
+  totals: { wins: number; ties: number; losses: number; otWins: number; otLosses: number };
+  atHome: { wins: number; ties: number; losses: number };
+  atAway: { wins: number; ties: number; losses: number };
+  meetings: number;
+  seasonsCovered: { count: number; from: string | null; to: string | null };
+};
+
+export const getAllTimeHeadToHead = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({ home: z.string().min(1), away: z.string().min(1) }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const key = `allTimeH2H:${CACHE_VERSION}:${data.home}__${data.away}`.toLowerCase();
+    const { getCached, setCached, computeAllTimeHeadToHead } = await import(
+      "./stats.server"
+    );
+    const cached = await getCached(key, HISTORY_TTL_MS);
+    if (cached) return cached as AllTimeH2HResult;
+    const result = await computeAllTimeHeadToHead(data.home, data.away);
+    await setCached(key, result);
+    return result;
+  });
+
+export type LastMeetingRecapResult = {
+  date: string;
+  seasonLabel: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeGoals: number;
+  awayGoals: number;
+  gameUrl: string;
+  goals: Array<{
+    teamCode: string;
+    scorer: string;
+    assists: string[];
+    period: string | null;
+    time: string | null;
+  }>;
+} | null;
+
+export const getLastMeetingRecap = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({ home: z.string().min(1), away: z.string().min(1) }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const key = `lastMeeting:${CACHE_VERSION}:${data.home}__${data.away}`.toLowerCase();
+    const { getCached, setCached, fetchLastMeetingRecap } = await import(
+      "./stats.server"
+    );
+    const cached = await getCached(key, HISTORY_TTL_MS);
+    if (cached) return cached as LastMeetingRecapResult;
+    const recap = await fetchLastMeetingRecap(data.home, data.away);
+    await setCached(key, recap);
+    return recap as LastMeetingRecapResult;
+  });
+
+export type SeasonTrajectoryResult = {
+  team: string;
+  seasonLabel: string;
+  points: Array<{
+    gameNumber: number;
+    date: string;
+    rollingPpg: number;
+    cumulativePpg: number;
+  }>;
+  leagueAveragePpg: number | null;
+};
+
+export const getSeasonTrajectory = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({ team: z.string().min(1), season: z.string().optional() })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const season = await resolveSeason(data.season);
+    const key =
+      `trajectory:${CACHE_VERSION}:${season.label}:${data.team}`.toLowerCase();
+    const { getCached, setCached, fetchSeasonTrajectory } = await import(
+      "./stats.server"
+    );
+    const cached = await getCached(key, HISTORY_TTL_MS);
+    if (cached) return cached as SeasonTrajectoryResult;
+    const traj = await fetchSeasonTrajectory(data.team, season);
+    await setCached(key, traj);
+    return traj as SeasonTrajectoryResult;
+  });
+
+// ---------- Full standings (Compare page) ----------
+
+export type StandingsRow = {
+  position: number;
+  team: string;
+  gamesPlayed: number;
+  wins: number;
+  ties: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDiff: number;
+  points: number;
+  otWins: number;
+  otLosses: number;
+};
+
+export const getFullStandings = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({ season: z.string().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const season = await resolveSeason(data.season);
+    const key = `fullStandings:${CACHE_VERSION}:${season.label}`;
+    const { getCached, setCached, fetchFullStandings } = await import(
+      "./stats.server"
+    );
+    const cached = await getCached(key, CACHE_TTL_MS);
+    if (cached) return cached as { rows: StandingsRow[]; season: string };
+    const rows = await fetchFullStandings(season);
+    const payload = { rows, season: season.label };
+    await setCached(key, payload);
+    return payload;
+  });
+
+// ---------- League-wide overview (home-page cards) ----------
+
+export type LeagueOverviewResult = {
+  seasonLabel: string;
+  topScorers: Array<{
+    rank: number;
+    name: string;
+    team: string;
+    goals: number | null;
+    assists: number | null;
+    points: number;
+    gamesPlayed: number | null;
+  }>;
+  topGoalies: Array<{
+    rank: number;
+    name: string;
+    team: string;
+    gamesPlayed: number;
+    savePct: number | null;
+    gaa: number | null;
+    shutouts: number | null;
+    wins: number | null;
+    losses: number | null;
+  }>;
+  hottestTeams: Array<{
+    rank: number;
+    team: string;
+    points: number;
+    results: Array<"W" | "OTW" | "T" | "OTL" | "L">;
+    goalsFor: number;
+    goalsAgainst: number;
+  }>;
+  highestScoring: Array<{
+    rank: number;
+    team: string;
+    gamesPlayed: number;
+    goalsFor: number;
+    goalsAgainst: number;
+    perGame: number;
+  }>;
+  bestDefenses: Array<{
+    rank: number;
+    team: string;
+    gamesPlayed: number;
+    goalsFor: number;
+    goalsAgainst: number;
+    perGame: number;
+  }>;
+};
+
+export const getLeagueOverview = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({ season: z.string().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const season = await resolveSeason(data.season);
+    const key = `leagueOverview:${CACHE_VERSION}:${season.label}`;
+    const { getCached, setCached, fetchLeagueOverview } = await import(
+      "./stats.server"
+    );
+    const cached = await getCached(key, CACHE_TTL_MS);
+    if (cached) return cached as LeagueOverviewResult;
+    const overview = await fetchLeagueOverview(season);
+    await setCached(key, overview);
+    return overview as LeagueOverviewResult;
+  });
+
+
+
+
+
