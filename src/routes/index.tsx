@@ -1929,6 +1929,15 @@ function PostgameRecapCard({
       </CardHeader>
 
       <CardContent className="space-y-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 h-8 gap-1 text-muted-foreground hover:text-foreground"
+          onClick={onBackToBriefing}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Tillbaka till briefing
+        </Button>
         <div className="flex flex-wrap items-baseline gap-2">
           <div className="text-base inline-flex items-baseline gap-4">
             <span className="font-medium">{recap.homeTeam}</span>
