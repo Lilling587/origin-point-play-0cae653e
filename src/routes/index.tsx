@@ -228,6 +228,11 @@ function Dashboard() {
 
   const home = search.home || favorite || DEFAULT_FAVORITE_TEAM;
   const away = search.away;
+  const selectedAway =
+    away && away !== home
+      ? away
+      : (teamsQuery.data?.teams ?? []).find((team: string) => team !== home) ?? "";
+
   type BriefingCache = {
     briefing: Briefing;
     fetchedAt: string;
@@ -237,26 +242,31 @@ function Dashboard() {
   const briefingCacheKey = (h: string, a: string, s: string) =>
     ["briefing-cache", s, h, a] as const;
   const [briefing, setBriefingState] = useState<BriefingCache | null>(() =>
-    qc.getQueryData<BriefingCache>(briefingCacheKey(home, away ?? "", activeSeason)) ?? null,
+    qc.getQueryData<BriefingCache>(briefingCacheKey(home, selectedAway, activeSeason)) ?? null,
   );
   const setBriefing = (data: BriefingCache | null) => {
     setBriefingState(data);
     if (data) {
+      const season = data.season ?? activeSeason;
       qc.setQueryData(
-        briefingCacheKey(data.briefing.home.name, data.briefing.away.name, data.season ?? activeSeason),
+        briefingCacheKey(data.briefing.home.name, data.briefing.away.name, season),
         data,
       );
+      // Also store under the input team identifiers used by the URL/selector
+      // so a remount (e.g. after navigating to Compare and back) can restore.
+      qc.setQueryData(briefingCacheKey(home, selectedAway, season), data);
     }
   };
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const cached = qc.getQueryData<BriefingCache>(
-      briefingCacheKey(home, away ?? "", activeSeason),
-    );
-    if (cached) setBriefingState(cached);
+    const cached =
+      qc.getQueryData<BriefingCache>(
+        briefingCacheKey(home, selectedAway, activeSeason),
+      ) ?? null;
+    setBriefingState(cached);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [home, away, activeSeason]);
+  }, [home, selectedAway, activeSeason]);
 
 
   const [validationErrors, setValidationErrors] = useState<{
@@ -291,10 +301,6 @@ function Dashboard() {
     }
   };
 
-  const selectedAway =
-    away && away !== home
-      ? away
-      : (teamsQuery.data?.teams ?? []).find((team: string) => team !== home) ?? "";
 
   const briefingMut = useMutation({
     mutationFn: (vars: { home: string; away: string; force?: boolean }) =>
