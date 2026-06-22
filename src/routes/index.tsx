@@ -1691,6 +1691,12 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
     for (const [code, n] of counts) if (n === recap.homeGoals && code) return code;
     return null;
   })();
+  const awayCode = (() => {
+    const counts = new Map<string, number>();
+    for (const g of recap.goals) counts.set(g.teamCode, (counts.get(g.teamCode) ?? 0) + 1);
+    for (const [code, n] of counts) if (n === recap.awayGoals && code) return code;
+    return null;
+  })();
 
   // Period-by-period scoring
   const periodOrder = ["1", "2", "3", "OT", "SO"] as const;
@@ -1775,6 +1781,7 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
     }
     if (leader !== "tie") lastLeader = leader;
   }
+  const largestLeadTeamCode = largestLeadLeader === "home" ? homeCode : largestLeadLeader === "away" ? awayCode : null;
 
   const formatTime = (t: string | null) => (t ? t.replace(/\s+/g, "") : "");
 
@@ -1889,6 +1896,9 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
               Största ledning
             </div>
             <div className="font-mono text-base tabular-nums">+{largestLead}</div>
+            <div className="truncate text-xs text-muted-foreground">
+              {largestLeadTeamCode ?? "–"}
+            </div>
           </div>
           <div>
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
