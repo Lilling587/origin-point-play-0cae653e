@@ -19,7 +19,7 @@ async function resolveSeason(label?: string | null): Promise<Season> {
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6h
 const TEAMS_TTL_MS = 24 * 60 * 60 * 1000; // 24h
-const CACHE_VERSION = "v11";
+const CACHE_VERSION = "v12";
 const HISTORY_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 const LEAGUE_SLUG = "hockeyettan-sodra";
 
@@ -324,6 +324,8 @@ export type LastMeetingRecapResult = {
     period: string | null;
     time: string | null;
   }>;
+  wentToOvertime: boolean;
+  wentToShootout: boolean;
 } | null;
 
 export const getLastMeetingRecap = createServerFn({ method: "POST" })

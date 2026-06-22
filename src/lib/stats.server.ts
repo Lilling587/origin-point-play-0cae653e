@@ -1547,6 +1547,8 @@ export type LastMeetingRecap = {
     period: string | null;
     time: string | null;
   }>;
+  wentToOvertime: boolean;
+  wentToShootout: boolean;
 };
 
 export async function fetchLastMeetingRecap(
@@ -1580,6 +1582,8 @@ export async function fetchLastMeetingRecap(
   const gameId = meeting.g.id!;
   const gameUrl = `${STATS_BASE_URL}/Game/Events/${gameId}`;
   const goals: LastMeetingRecap["goals"] = [];
+  let wentToOvertime = false;
+  let wentToShootout = false;
   try {
     const res = await fetch(gameUrl, {
       headers: { "user-agent": "Mozilla/5.0", "cache-control": "no-cache" },
@@ -1615,7 +1619,11 @@ export async function fetchLastMeetingRecap(
       const h3 = row.match(/<h3>([^<]+)<\/h3>/i);
       if (h3) {
         const p = headerToPeriod(h3[1]);
-        if (p) currentPeriod = p;
+        if (p) {
+          currentPeriod = p;
+          if (p === "OT") wentToOvertime = true;
+          if (p === "SO") wentToShootout = true;
+        }
         continue;
       }
       if (!/Total goals scored/i.test(row)) continue;
@@ -1666,6 +1674,8 @@ export async function fetchLastMeetingRecap(
     awayGoals: meeting.g.awayGoals!,
     gameUrl,
     goals,
+    wentToOvertime,
+    wentToShootout,
   };
 }
 
