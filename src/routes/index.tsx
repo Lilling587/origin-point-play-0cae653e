@@ -1841,6 +1841,10 @@ function PostgameRecapCard({
     return null;
   };
   const periodScores = new Map<PeriodKey, { home: number; away: number }>();
+  // Always show regulation periods, even when no goals were scored.
+  for (const p of ["1", "2", "3"] as PeriodKey[]) {
+    periodScores.set(p, { home: 0, away: 0 });
+  }
   for (const g of recap.goals) {
     const k = normalizePeriod(g.period);
     if (!k) continue;
