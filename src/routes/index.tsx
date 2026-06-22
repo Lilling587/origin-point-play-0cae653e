@@ -53,6 +53,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCw, Loader2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import {
@@ -307,6 +308,7 @@ function Dashboard() {
       fetchBriefing({ data: { ...vars, season: activeSeason } }),
     onSuccess: (data) => {
       setBriefing(data);
+      setActiveTab("briefing");
       setError(null);
     },
     onError: (e: Error, vars) => {
@@ -328,9 +330,14 @@ function Dashboard() {
   };
 
   const canLoad = home && selectedAway && home !== selectedAway;
+  const [activeTab, setActiveTab] = useState<"briefing" | "recap">("briefing");
 
   return (
-    <div className="min-h-screen bg-background">
+    <Tabs
+      value={activeTab}
+      onValueChange={(value) => setActiveTab(value as "briefing" | "recap")}
+      className="min-h-screen bg-background"
+    >
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-start justify-between gap-4 px-6 py-6">
           <div>
@@ -342,6 +349,10 @@ function Dashboard() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <TabsList>
+              <TabsTrigger value="briefing">Matchbriefing</TabsTrigger>
+              <TabsTrigger value="recap">Postgame recap</TabsTrigger>
+            </TabsList>
             <Button asChild variant="outline" size="sm">
               <Link to="/compare">
                 <Scale className="mr-2 h-4 w-4" />
@@ -498,24 +509,30 @@ function Dashboard() {
 
         {briefingMut.isPending ? <BriefingSkeleton /> : null}
 
-        {briefing ? (
-          <BriefingView
-            data={briefing.briefing}
-            fetchedAt={briefing.fetchedAt}
-            cached={briefing.cached}
-            refreshing={briefingMut.isPending}
-            refreshError={briefingMut.isError ? (briefingMut.error as Error).message : null}
-            onRefresh={() =>
-                briefingMut.mutate({ home, away: selectedAway, force: true }, {
-                onSuccess: () => qc.invalidateQueries({ queryKey: ["teams"] }),
-              })
-            }
-          />
-        ) : null}
+        <TabsContent value="briefing" className="mt-0">
+          {briefing ? (
+            <BriefingView
+              data={briefing.briefing}
+              fetchedAt={briefing.fetchedAt}
+              cached={briefing.cached}
+              refreshing={briefingMut.isPending}
+              refreshError={briefingMut.isError ? (briefingMut.error as Error).message : null}
+              onRefresh={() =>
+                  briefingMut.mutate({ home, away: selectedAway, force: true }, {
+                  onSuccess: () => qc.invalidateQueries({ queryKey: ["teams"] }),
+                })
+              }
+            />
+          ) : null}
+        </TabsContent>
+
+        <TabsContent value="recap" className="mt-0">
+          {canLoad ? <PostgameRecapCard home={home} away={selectedAway} /> : null}
+        </TabsContent>
 
       </main>
 
-    </div>
+    </Tabs>
   );
 }
 function SeasonPicker({
