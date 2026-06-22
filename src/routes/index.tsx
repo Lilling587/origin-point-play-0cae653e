@@ -1907,11 +1907,11 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
 
       <CardContent className="space-y-3">
         <div className="flex flex-wrap items-baseline gap-2">
-          <div className="text-base">
-            <span className="font-medium">{recap.homeTeam}</span>{" "}
+          <div className="text-base inline-flex items-baseline gap-4">
+            <span className="font-medium">{recap.homeTeam}</span>
             <span className="font-mono text-xl tabular-nums">
               {recap.homeGoals} – {recap.awayGoals}
-            </span>{" "}
+            </span>
             <span className="font-medium">{recap.awayTeam}</span>
           </div>
         </div>
