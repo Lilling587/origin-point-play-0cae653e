@@ -27,7 +27,7 @@ import type {
 } from "@/lib/stats.functions";
 
 import { Input } from "@/components/ui/input";
-import { AlertCircle, Check, X, Info, Star, ImageDown, Scale } from "lucide-react";
+import { AlertCircle, Check, X, Info, Star, ImageDown, Scale, ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
