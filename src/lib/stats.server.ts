@@ -928,7 +928,7 @@ function computePeriodGoals(
 ): Record<string, PeriodGoals> {
   const out: Record<string, PeriodGoals> = {};
   for (const teamName of teamNames) {
-    const totals: PeriodGoals = { p1: 0, p2: 0, p3: 0, ot: 0, total: 0, games: 0 };
+    const totals: PeriodGoals = { p1: 0, p2: 0, p3: 0, ot: 0, gws: 0, total: 0, games: 0 };
     for (const g of games) {
       if (!g.played) continue;
       const isHome = g.homeTeam === teamName;
@@ -940,7 +940,8 @@ function computePeriodGoals(
         if (idx === 0) totals.p1 += goals;
         else if (idx === 1) totals.p2 += goals;
         else if (idx === 2) totals.p3 += goals;
-        else totals.ot += goals;
+        else if (idx === 3) totals.ot += goals;
+        else totals.gws += goals;
         totals.total += goals;
       });
     }
