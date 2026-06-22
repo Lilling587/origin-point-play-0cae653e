@@ -1547,6 +1547,8 @@ export type LastMeetingRecap = {
     period: string | null;
     time: string | null;
   }>;
+  wentToOvertime: boolean;
+  wentToShootout: boolean;
 };
 
 export async function fetchLastMeetingRecap(
