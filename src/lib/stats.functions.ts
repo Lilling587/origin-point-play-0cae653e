@@ -328,19 +328,28 @@ export type LastMeetingRecapResult = {
 
 export const getLastMeetingRecap = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    z.object({ home: z.string().min(1), away: z.string().min(1) }).parse(input),
+    z
+      .object({
+        home: z.string().min(1),
+        away: z.string().min(1),
+        force: z.boolean().optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data }) => {
     const key = `lastMeeting:${CACHE_VERSION}:${data.home}__${data.away}`.toLowerCase();
     const { getCached, setCached, fetchLastMeetingRecap } = await import(
       "./stats.server"
     );
-    const cached = await getCached(key, HISTORY_TTL_MS);
-    if (cached) return cached as LastMeetingRecapResult;
+    if (!data.force) {
+      const cached = await getCached(key, HISTORY_TTL_MS);
+      if (cached) return cached as LastMeetingRecapResult;
+    }
     const recap = await fetchLastMeetingRecap(data.home, data.away);
     await setCached(key, recap);
     return recap as LastMeetingRecapResult;
   });
+
 
 export type SeasonTrajectoryResult = {
   team: string;
