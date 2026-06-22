@@ -1803,6 +1803,43 @@ function PostgameRecapCard({ home, away }: { home: string; away: string }) {
           <span className="text-sm font-medium text-primary">{headline}</span>
         </div>
 
+        {(largestLead > 0 || leadChanges > 0 || recap.goals.length > 0) && (
+          <div className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm">
+            <div className="mb-1 text-[10px] uppercase tracking-wide text-primary">
+              Matchhöjdpunkter
+            </div>
+            <p className="leading-relaxed text-foreground">
+              {(() => {
+                const leaderName =
+                  largestLeadLeader === "home" ? recap.homeTeam : recap.awayTeam;
+                const parts: string[] = [];
+                if (largestLead > 0) {
+                  const when = largestLeadGoal
+                    ? ` (P${normalizePeriod(largestLeadGoal.period) ?? "?"}${largestLeadGoal.time ? ` ${formatTime(largestLeadGoal.time)}` : ""})`
+                    : "";
+                  parts.push(
+                    `${leaderName} ledde med som mest ${largestLead} mål (${largestLeadHome}–${largestLeadAway})${when}.`
+                  );
+                }
+                if (leadChanges === 0) {
+                  if (lastLeader === "home") {
+                    parts.push(`${recap.homeTeam} ledde matchen från start till mål.`);
+                  } else if (lastLeader === "away") {
+                    parts.push(`${recap.awayTeam} ledde matchen från start till mål.`);
+                  } else {
+                    parts.push("Inget av lagen kunde ta ett bestående grepp om matchen.");
+                  }
+                } else {
+                  parts.push(
+                    `Ledningen byttes ${leadChanges} gång${leadChanges > 1 ? "er" : ""}${leadChanges >= 2 ? " i en jämn och växlingsrik match" : ""}.`
+                  );
+                }
+                return parts.join(" ");
+              })()}
+            </p>
+          </div>
+        )}
+
         {periodsPlayed.length > 0 && (
           <div>
             <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
