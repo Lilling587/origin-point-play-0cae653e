@@ -61,6 +61,7 @@ import {
   setFavoriteTeam,
   DEFAULT_FAVORITE_TEAM,
 } from "@/lib/preferences";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const searchSchema = z.object({
   home: fallback(z.string(), "").default(""),
