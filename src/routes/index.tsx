@@ -140,6 +140,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Dashboard() {
+  console.log("[Dashboard render]");
   const loaderData = Route.useLoaderData();
   const fetchTeams = useServerFn(listTeams);
   const fetchSeasons = useServerFn(listSeasons);
