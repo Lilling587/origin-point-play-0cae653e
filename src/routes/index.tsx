@@ -350,16 +350,15 @@ function Dashboard() {
     const threshold = 56;
 
     const onDown = (e: PointerEvent) => {
-      if (e.pointerType !== "touch") return;
       start = { x: e.clientX, y: e.clientY };
       end = null;
     };
     const onMove = (e: PointerEvent) => {
-      if (e.pointerType !== "touch" || !start) return;
+      if (!start) return;
       end = { x: e.clientX, y: e.clientY };
     };
     const onUp = (e: PointerEvent) => {
-      if (e.pointerType !== "touch" || !start || !end) return;
+      if (!start || !end) return;
       const dx = end.x - start.x;
       const dy = end.y - start.y;
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
