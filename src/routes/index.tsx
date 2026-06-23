@@ -333,10 +333,17 @@ function Dashboard() {
   };
 
   const canLoad = home && selectedAway && home !== selectedAway;
-  const [activeTab, setActiveTab] = useState<"briefing" | "recap">(() => getLastActiveTab() ?? "briefing");
+  const [activeTab, setActiveTab] = useState<"briefing" | "recap">("briefing");
+  const hasLoadedSavedTab = useRef(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
+    if (!hasLoadedSavedTab.current) {
+      hasLoadedSavedTab.current = true;
+      const savedTab = getLastActiveTab();
+      if (savedTab) setActiveTab(savedTab);
+      return;
+    }
     setLastActiveTab(activeTab);
   }, [activeTab]);
 
