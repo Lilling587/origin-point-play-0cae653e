@@ -13,6 +13,10 @@ function keepPreviewAliveAfterDevServerRestart() {
     transform(code: string, id: string) {
       if (!id.replace(/\\/g, "/").includes("/vite/dist/client/client.mjs")) return null;
 
+      // Patch the disconnect handler so the page never auto-reloads on a
+      // transient websocket drop (server restart, network blip, slow initial
+      // bundle). Instead we wait for the server to come back, then silently
+      // re-establish the HMR transport with exponential backoff.
       return code.replace(
         /if \(payload\.event === "vite:ws:disconnect"\) \{[\s\S]*?\n\s*}\n\s*break;/,
         `if (payload.event === "vite:ws:disconnect") {
@@ -21,8 +25,20 @@ function keepPreviewAliveAfterDevServerRestart() {
 \t\t\t\t\tconst socket = payload.data.webSocket;
 \t\t\t\t\tconst url = new URL(socket.url);
 \t\t\t\t\turl.search = "";
-\t\t\t\t\tawait waitForSuccessfulPing(url.href);
-\t\t\t\t\tawait transport.connect(createHMRHandler(handleMessage));
+\t\t\t\t\tlet attempt = 0;
+\t\t\t\t\twhile (true) {
+\t\t\t\t\t\ttry {
+\t\t\t\t\t\t\tawait waitForSuccessfulPing(url.href);
+\t\t\t\t\t\t\tawait transport.connect(createHMRHandler(handleMessage));
+\t\t\t\t\t\t\tconsole.info("[vite] connection restored");
+\t\t\t\t\t\t\tbreak;
+\t\t\t\t\t\t} catch (err) {
+\t\t\t\t\t\t\tattempt++;
+\t\t\t\t\t\t\tconst delay = Math.min(1000 * Math.pow(1.5, attempt), 10000);
+\t\t\t\t\t\t\tconsole.warn("[vite] reconnect attempt " + attempt + " failed, retrying in " + delay + "ms");
+\t\t\t\t\t\t\tawait new Promise((r) => setTimeout(r, delay));
+\t\t\t\t\t\t}
+\t\t\t\t\t}
 \t\t\t\t}
 \t\t\t}
 \t\t\tbreak;`,
@@ -40,13 +56,44 @@ export default defineConfig({
   vite: {
     plugins: [keepPreviewAliveAfterDevServerRestart()],
     server: {
+      // Warm up critical entry points so the initial bundle is ready before
+      // the browser opens the page — prevents long first-paint stalls that
+      // can race the HMR websocket handshake on slow cold starts.
+      warmup: {
+        clientFiles: [
+          "./src/router.tsx",
+          "./src/routes/__root.tsx",
+          "./src/routes/index.tsx",
+          "./src/routes/_authenticated/route.tsx",
+        ],
+      },
+      watch: {
+        // Ignore noisy paths so the dev server doesn't churn through HMR
+        // updates triggered by build artifacts, logs, or sandbox state.
+        ignored: [
+          "**/.git/**",
+          "**/node_modules/**",
+          "**/dist/**",
+          "**/.output/**",
+          "**/.nitro/**",
+          "**/.tanstack/**",
+          "**/coverage/**",
+          "**/tmp/**",
+          "**/.workspace/**",
+        ],
+      },
       hmr: {
         // The preview is served over HTTPS with no explicit port. Without a
         // clientPort, Vite generates a websocket URL like
         // `wss://<preview-host>:/`, then falls back to `localhost:8080` from
-        // the browser. That failed websocket path was what caused the delayed
+        // the browser. That failed websocket path caused the delayed
         // reconnect/reload cycle after a dev-server restart.
         clientPort: 443,
+        protocol: "wss",
+        // Be generous on the handshake — slow initial bundling on a cold
+        // start can otherwise time out the websocket before it opens.
+        timeout: 120_000,
+        overlay: true,
       },
     },
     optimizeDeps: {
