@@ -333,21 +333,45 @@ function Dashboard() {
   const canLoad = home && selectedAway && home !== selectedAway;
   const [activeTab, setActiveTab] = useState<"briefing" | "recap">("briefing");
   const isMobile = useIsMobile();
-  const swipeStart = useRef<{ x: number; y: number } | null>(null);
-  const swipeEnd = useRef<{ x: number; y: number } | null>(null);
+  const mainRef = useRef<HTMLElement>(null);
 
-  const handleSwipeEnd = () => {
-    if (!isMobile || !swipeStart.current || !swipeEnd.current) return;
-    const dx = swipeEnd.current.x - swipeStart.current.x;
-    const dy = swipeEnd.current.y - swipeStart.current.y;
+  useEffect(() => {
+    if (!isMobile) return;
+    const el = mainRef.current;
+    if (!el) return;
+    let start: { x: number; y: number } | null = null;
+    let end: { x: number; y: number } | null = null;
     const threshold = 56;
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
-      if (dx < 0 && activeTab === "briefing") setActiveTab("recap");
-      if (dx > 0 && activeTab === "recap") setActiveTab("briefing");
-    }
-    swipeStart.current = null;
-    swipeEnd.current = null;
-  };
+
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") return;
+      start = { x: e.clientX, y: e.clientY };
+      end = null;
+    };
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType !== "touch" || !start) return;
+      end = { x: e.clientX, y: e.clientY };
+    };
+    const onUp = (e: PointerEvent) => {
+      if (e.pointerType !== "touch" || !start || !end) return;
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
+        setActiveTab((prev) => (dx < 0 && prev === "briefing" ? "recap" : dx > 0 && prev === "recap" ? "briefing" : prev));
+      }
+      start = null;
+      end = null;
+    };
+
+    el.addEventListener("pointerdown", onDown);
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerup", onUp);
+    return () => {
+      el.removeEventListener("pointerdown", onDown);
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerup", onUp);
+    };
+  }, [isMobile]);
 
   return (
     <Tabs
@@ -390,22 +414,7 @@ function Dashboard() {
         </div>
       </header>
 
-      <main
-        className="mx-auto max-w-6xl px-6 py-8 space-y-6"
-        onPointerDown={(e) => {
-          if (!isMobile || e.pointerType !== "touch") return;
-          swipeStart.current = { x: e.clientX, y: e.clientY };
-          swipeEnd.current = null;
-        }}
-        onPointerMove={(e) => {
-          if (!isMobile || e.pointerType !== "touch") return;
-          swipeEnd.current = { x: e.clientX, y: e.clientY };
-        }}
-        onPointerUp={(e) => {
-          if (!isMobile || e.pointerType !== "touch") return;
-          handleSwipeEnd();
-        }}
-      >
+      <main ref={mainRef} className="mx-auto max-w-6xl px-6 py-8 space-y-6">
         <PendingSeasonsBanner
           pending={pendingQuery.data?.pending ?? []}
           onChanged={() => {
