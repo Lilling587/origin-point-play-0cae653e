@@ -391,7 +391,7 @@ function Dashboard() {
       </header>
 
       <main
-        className="mx-auto max-w-6xl px-6 py-8 space-y-6 touch-pan-y overscroll-x-contain"
+        className="mx-auto max-w-6xl px-6 py-8 space-y-6"
         onTouchStart={(e) => {
           touchStart.current = { x: e.changedTouches[0].screenX, y: e.changedTouches[0].screenY };
           touchEnd.current = null;
