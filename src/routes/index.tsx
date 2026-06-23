@@ -60,6 +60,8 @@ import {
   getFavoriteTeam,
   setFavoriteTeam,
   DEFAULT_FAVORITE_TEAM,
+  getLastActiveTab,
+  setLastActiveTab,
 } from "@/lib/preferences";
 import { useIsMobile } from "@/hooks/use-mobile";
 
