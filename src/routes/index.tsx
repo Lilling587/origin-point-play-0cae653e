@@ -60,6 +60,8 @@ import {
   getFavoriteTeam,
   setFavoriteTeam,
   DEFAULT_FAVORITE_TEAM,
+  getLastActiveTab,
+  setLastActiveTab,
 } from "@/lib/preferences";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -331,9 +333,13 @@ function Dashboard() {
   };
 
   const canLoad = home && selectedAway && home !== selectedAway;
-  const [activeTab, setActiveTab] = useState<"briefing" | "recap">("briefing");
+  const [activeTab, setActiveTab] = useState<"briefing" | "recap">(() => getLastActiveTab() ?? "briefing");
   const isMobile = useIsMobile();
   const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    setLastActiveTab(activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     if (!isMobile) return;
