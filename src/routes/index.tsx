@@ -2116,6 +2116,32 @@ function PostgameRecapCard({
           </div>
         )}
 
+        {(recap.homeShots !== null || recap.awayShots !== null || recap.homePim !== null || recap.awayPim !== null) && (
+          <div>
+            <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
+              Lagstatistik
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="rounded-md border border-border/60 bg-background/40 px-2 py-1">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Skott · {recap.homeTeam} – {recap.awayTeam}
+                </div>
+                <div className="font-mono tabular-nums">
+                  {recap.homeShots ?? "–"} – {recap.awayShots ?? "–"}
+                </div>
+              </div>
+              <div className="rounded-md border border-border/60 bg-background/40 px-2 py-1">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Utvisningsminuter
+                </div>
+                <div className="font-mono tabular-nums">
+                  {recap.homePim ?? "–"} – {recap.awayPim ?? "–"}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           {firstGoal && (
             <div>

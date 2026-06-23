@@ -1549,6 +1549,10 @@ export type LastMeetingRecap = {
   }>;
   wentToOvertime: boolean;
   wentToShootout: boolean;
+  homeShots: number | null;
+  awayShots: number | null;
+  homePim: number | null;
+  awayPim: number | null;
 };
 
 export async function fetchLastMeetingRecap(
@@ -1596,12 +1600,27 @@ export async function fetchLastMeetingRecap(
     goals: [],
     wentToOvertime: false,
     wentToShootout: false,
+    homeShots: null,
+    awayShots: null,
+    homePim: null,
+    awayPim: null,
   };
   try {
     const res = await fetch(gameUrl, {
       headers: { "user-agent": "Mozilla/5.0", "cache-control": "no-cache" },
     });
     const html = await res.text();
+    // Shots / PIM totals appear twice in the summary table — first occurrence
+    // is the home team's value, second is the away team's.
+    const extractPair = (label: string): [number | null, number | null] => {
+      const re = new RegExp(`${label}\\s*</td>\\s*<td[^>]*>\\s*<strong>\\s*(\\d+)\\s*</strong>`, "gi");
+      const out: number[] = [];
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(html)) !== null) out.push(parseInt(m[1], 10));
+      return [out[0] ?? null, out[1] ?? null];
+    };
+    [result.homeShots, result.awayShots] = extractPair("Shots");
+    [result.homePim, result.awayPim] = extractPair("PIM");
     const trRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
     const namePartRe = /\d+\.\s*([^<(]+?)(?=\s*<|\s*\(|$)/;
     const cleanName = (s: string) =>

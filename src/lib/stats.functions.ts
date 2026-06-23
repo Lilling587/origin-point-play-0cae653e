@@ -326,6 +326,10 @@ export type LastMeetingRecapResult = {
   }>;
   wentToOvertime: boolean;
   wentToShootout: boolean;
+  homeShots: number | null;
+  awayShots: number | null;
+  homePim: number | null;
+  awayPim: number | null;
 } | null;
 
 export const getLastMeetingRecap = createServerFn({ method: "POST" })
