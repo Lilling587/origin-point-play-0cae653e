@@ -14,13 +14,39 @@ export default defineConfig({
   },
   vite: {
     optimizeDeps: {
-      // Pre-bundle deps that otherwise get discovered after first render and
-      // trigger an "optimized dependencies changed. reloading" full page reload.
+      // Disable late dependency discovery: after a cold dev-server restart Vite can
+      // discover route-only dependencies several seconds after the page opens and
+      // force a full browser reload. Keep the needed browser deps explicit instead.
+      noDiscovery: true,
       include: [
-        "recharts",
+        "react",
+        "react-dom",
+        "react-dom/client",
+        "react/jsx-runtime",
+        "react/jsx-dev-runtime",
+        "@tanstack/react-query",
+        "@tanstack/react-router",
         "@tanstack/router-core",
         "@tanstack/router-core/ssr/client",
+        "@tanstack/zod-adapter",
+        "@radix-ui/react-dialog",
+        "@radix-ui/react-label",
+        "@radix-ui/react-popover",
+        "@radix-ui/react-select",
+        "@radix-ui/react-slot",
+        "@radix-ui/react-switch",
+        "@radix-ui/react-tabs",
+        "@supabase/supabase-js",
+        "class-variance-authority",
+        "clsx",
+        "cmdk",
+        "html-to-image",
+        "lucide-react",
+        "recharts",
         "seroval",
+        "sonner",
+        "tailwind-merge",
+        "zod",
       ],
     },
   },
