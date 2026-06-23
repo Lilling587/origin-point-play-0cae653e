@@ -2,6 +2,7 @@
 // SSR-safe: every accessor guards `typeof window`.
 
 const STORAGE_KEY = "producerStats.favoriteTeam";
+const TAB_STORAGE_KEY = "producerStats.lastActiveTab";
 export const DEFAULT_FAVORITE_TEAM = "Grästorps IK";
 
 export function getFavoriteTeam(): string {
@@ -23,3 +24,26 @@ export function setFavoriteTeam(team: string): void {
     // ignore quota / private mode
   }
 }
+
+export type LastActiveTab = "briefing" | "recap";
+
+export function getLastActiveTab(): LastActiveTab | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(TAB_STORAGE_KEY);
+    if (raw === "briefing" || raw === "recap") return raw;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function setLastActiveTab(tab: LastActiveTab): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(TAB_STORAGE_KEY, tab);
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
