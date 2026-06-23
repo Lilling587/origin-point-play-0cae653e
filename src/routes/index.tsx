@@ -338,7 +338,6 @@ function Dashboard() {
   const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    console.log("[tab persist] saving", activeTab);
     setLastActiveTab(activeTab);
   }, [activeTab]);
 
