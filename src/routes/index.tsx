@@ -341,7 +341,6 @@ function Dashboard() {
   }, [activeTab]);
 
   useEffect(() => {
-    console.log("[swipe] attach");
     const el = document;
     let start: { x: number; y: number } | null = null;
     let end: { x: number; y: number } | null = null;
@@ -349,7 +348,6 @@ function Dashboard() {
 
     const onDown = (e: PointerEvent) => {
       if (window.innerWidth >= 768) return;
-      console.log("[swipe] down", e.clientX);
       start = { x: e.clientX, y: e.clientY };
       end = null;
     };
@@ -359,7 +357,6 @@ function Dashboard() {
     };
     const onUp = (e: PointerEvent) => {
       if (!start || !end || window.innerWidth >= 768) return;
-      console.log("[swipe] up", end.x - start.x, end.y - start.y);
       const dx = end.x - start.x;
       const dy = end.y - start.y;
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
