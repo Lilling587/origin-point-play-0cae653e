@@ -13,6 +13,16 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    server: {
+      hmr: {
+        // The preview is served over HTTPS with no explicit port. Without a
+        // clientPort, Vite generates a websocket URL like
+        // `wss://<preview-host>:/`, then falls back to `localhost:8080` from
+        // the browser. That failed websocket path was what caused the delayed
+        // reconnect/reload cycle after a dev-server restart.
+        clientPort: 443,
+      },
+    },
     optimizeDeps: {
       // Disable late dependency discovery: after a cold dev-server restart Vite can
       // discover route-only dependencies several seconds after the page opens and
