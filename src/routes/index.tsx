@@ -418,8 +418,8 @@ function Dashboard() {
   </Link>
 </Button>
             <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-initial">
-              <Link to="/notifications">Notiser</Link>
-            </Button>
+  <Link to="/notifications">Logga in</Link>
+</Button>
           </div>
         </div>
       </header>
