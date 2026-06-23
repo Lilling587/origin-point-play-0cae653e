@@ -341,6 +341,7 @@ function Dashboard() {
     const dx = touchEnd.current.x - touchStart.current.x;
     const dy = touchEnd.current.y - touchStart.current.y;
     const threshold = 56;
+    console.log("[swipe] isMobile", isMobile, "dx", dx, "dy", dy);
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
       if (dx < 0 && activeTab === "briefing") setActiveTab("recap");
       if (dx > 0 && activeTab === "recap") setActiveTab("briefing");
