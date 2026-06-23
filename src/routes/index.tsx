@@ -333,21 +333,20 @@ function Dashboard() {
   const canLoad = home && selectedAway && home !== selectedAway;
   const [activeTab, setActiveTab] = useState<"briefing" | "recap">("briefing");
   const isMobile = useIsMobile();
-  const touchStart = useRef<{ x: number; y: number } | null>(null);
-  const touchEnd = useRef<{ x: number; y: number } | null>(null);
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const swipeEnd = useRef<{ x: number; y: number } | null>(null);
 
-  const handleSwipeTabChange = () => {
-    if (!isMobile || !touchStart.current || !touchEnd.current) return;
-    const dx = touchEnd.current.x - touchStart.current.x;
-    const dy = touchEnd.current.y - touchStart.current.y;
+  const handleSwipeEnd = () => {
+    if (!isMobile || !swipeStart.current || !swipeEnd.current) return;
+    const dx = swipeEnd.current.x - swipeStart.current.x;
+    const dy = swipeEnd.current.y - swipeStart.current.y;
     const threshold = 56;
-    console.log("[swipe] isMobile", isMobile, "dx", dx, "dy", dy);
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
       if (dx < 0 && activeTab === "briefing") setActiveTab("recap");
       if (dx > 0 && activeTab === "recap") setActiveTab("briefing");
     }
-    touchStart.current = null;
-    touchEnd.current = null;
+    swipeStart.current = null;
+    swipeEnd.current = null;
   };
 
   return (
