@@ -341,8 +341,7 @@ function Dashboard() {
   }, [activeTab]);
 
   useEffect(() => {
-    const el = document.documentElement;
-    if (!el) return;
+    const el = document;
     let start: { x: number; y: number } | null = null;
     let end: { x: number; y: number } | null = null;
     const threshold = 56;
@@ -367,13 +366,13 @@ function Dashboard() {
       end = null;
     };
 
-    el.addEventListener("pointerdown", onDown, true);
-    el.addEventListener("pointermove", onMove, true);
-    el.addEventListener("pointerup", onUp, true);
+    el.addEventListener("pointerdown", onDown);
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerup", onUp);
     return () => {
-      el.removeEventListener("pointerdown", onDown, true);
-      el.removeEventListener("pointermove", onMove, true);
-      el.removeEventListener("pointerup", onUp, true);
+      el.removeEventListener("pointerdown", onDown);
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerup", onUp);
     };
   }, []);
 
