@@ -1549,6 +1549,10 @@ export type LastMeetingRecap = {
   }>;
   wentToOvertime: boolean;
   wentToShootout: boolean;
+  homeShots: number | null;
+  awayShots: number | null;
+  homePim: number | null;
+  awayPim: number | null;
 };
 
 export async function fetchLastMeetingRecap(
