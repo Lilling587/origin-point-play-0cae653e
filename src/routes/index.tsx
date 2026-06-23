@@ -362,19 +362,20 @@ function Dashboard() {
       const dx = end.x - start.x;
       const dy = end.y - start.y;
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
+        console.log("[swipe] switch");
         setActiveTab((prev) => (dx < 0 && prev === "briefing" ? "recap" : dx > 0 && prev === "recap" ? "briefing" : prev));
       }
       start = null;
       end = null;
     };
 
-    el.addEventListener("pointerdown", onDown);
-    el.addEventListener("pointermove", onMove);
-    el.addEventListener("pointerup", onUp);
+    el.addEventListener("pointerdown", onDown, true);
+    el.addEventListener("pointermove", onMove, true);
+    el.addEventListener("pointerup", onUp, true);
     return () => {
-      el.removeEventListener("pointerdown", onDown);
-      el.removeEventListener("pointermove", onMove);
-      el.removeEventListener("pointerup", onUp);
+      el.removeEventListener("pointerdown", onDown, true);
+      el.removeEventListener("pointermove", onMove, true);
+      el.removeEventListener("pointerup", onUp, true);
     };
   }, [isMobile]);
 
