@@ -118,7 +118,7 @@ function NotFound() {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Grästorps IK — Producent-statistik" },
+      { title: "Grästorps IK" },
       {
         name: "description",
         content:
