@@ -20,6 +20,10 @@ function nowMs() {
 }
 
 function sanitizeUrl(value: string) {
+  const looksUrlLike = /^[a-z][a-z\d+.-]*:\/\//i.test(value) || value.startsWith("/") || value.startsWith("?");
+  if (!looksUrlLike) {
+    return value.replace(/([?&][^=]*(?:token|secret|key|auth|session|code)[^=]*=)[^&]+/gi, "$1[redacted]");
+  }
   try {
     const url = new URL(value, window.location.href);
     for (const key of Array.from(url.searchParams.keys())) {
@@ -192,6 +196,28 @@ function installHmrLogging() {
   }
 }
 
+function installResourceObserver() {
+  if (typeof PerformanceObserver === "undefined") return;
+  try {
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        const resource = entry as PerformanceResourceTiming;
+        log("resource", {
+          name: resource.name,
+          initiatorType: resource.initiatorType,
+          startTime: Math.round(resource.startTime),
+          duration: Math.round(resource.duration),
+          transferSize: resource.transferSize,
+          encodedBodySize: resource.encodedBodySize,
+        });
+      }
+    });
+    observer.observe({ type: "resource", buffered: true });
+  } catch (error) {
+    log("resource-observer:error", { error });
+  }
+}
+
 export function installReloadDiagnostics() {
   if (typeof window === "undefined" || window.__reloadDiagnosticsInstalled) return;
   window.__reloadDiagnosticsInstalled = true;
@@ -204,6 +230,7 @@ export function installReloadDiagnostics() {
   log("boot", navigationSnapshot());
   installNetworkLogging();
   installHmrLogging();
+  installResourceObserver();
 
   window.addEventListener("beforeunload", () => log("page:beforeunload", navigationSnapshot()));
   window.addEventListener("pagehide", (event) => log("page:pagehide", { persisted: event.persisted, ...navigationSnapshot() }));
