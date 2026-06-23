@@ -12,4 +12,16 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    optimizeDeps: {
+      // Pre-bundle deps that otherwise get discovered after first render and
+      // trigger an "optimized dependencies changed. reloading" full page reload.
+      include: [
+        "recharts",
+        "@tanstack/router-core",
+        "@tanstack/router-core/ssr/client",
+        "seroval",
+      ],
+    },
+  },
 });
