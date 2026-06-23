@@ -2163,14 +2163,16 @@ function PostgameRecapCard({
             </div>
           )}
           {gwg && (
-            <div>
+            <div className="min-w-0">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
                 Avgörande mål
               </div>
               <div className="font-medium">{gwg.teamCode}</div>
-              <div className="truncate text-xs text-muted-foreground">
+              <div className="break-words text-xs text-muted-foreground">
                 {gwg.scorer}
-                {` · ${gwgHome}-${gwgAway}`}
+              </div>
+              <div className="font-mono text-xs tabular-nums text-muted-foreground">
+                {gwgHome}-{gwgAway}
                 {gwg.period
                   ? ` · P${normalizePeriod(gwg.period) ?? "?"}${gwg.time ? ` ${formatTime(gwg.time)}` : ""}`
                   : ""}
