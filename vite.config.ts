@@ -6,6 +6,24 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+function keepPreviewAliveAfterDevServerRestart() {
+  return {
+    name: "keep-preview-alive-after-dev-server-restart",
+    apply: "serve" as const,
+    transform(code: string, id: string) {
+      if (!id.replace(/\\/g, "/").includes("/vite/dist/client/client.mjs")) return null;
+
+      return code.replace(
+        /if \(payload\.event === "vite:ws:disconnect"\) \{[\s\S]*?\n\s*}\n\s*break;/,
+        `if (payload.event === "vite:ws:disconnect") {
+\t\t\t\tconsole.info("[vite] server connection lost; keeping the current page alive instead of auto-reloading after restart.");
+\t\t\t}
+\t\t\tbreak;`,
+      );
+    },
+  };
+}
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
@@ -13,6 +31,7 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    plugins: [keepPreviewAliveAfterDevServerRestart()],
     server: {
       hmr: {
         // The preview is served over HTTPS with no explicit port. Without a
