@@ -341,6 +341,7 @@ function Dashboard() {
   }, [activeTab]);
 
   useEffect(() => {
+    console.log("[swipe] effect active", isMobile);
     if (!isMobile) return;
     const el = document.documentElement;
     if (!el) return;
