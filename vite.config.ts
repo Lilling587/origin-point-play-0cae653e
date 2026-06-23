@@ -83,15 +83,10 @@ export default defineConfig({
         ],
       },
       hmr: {
-        // The preview is served over HTTPS with no explicit port. Without a
-        // clientPort, Vite generates a websocket URL like
-        // `wss://<preview-host>:/`, then falls back to `localhost:8080` from
-        // the browser. That failed websocket path caused the delayed
-        // reconnect/reload cycle after a dev-server restart.
-        clientPort: 443,
-        protocol: "wss",
         // Be generous on the handshake — slow initial bundling on a cold
         // start can otherwise time out the websocket before it opens.
+        // Leave clientPort/protocol to the sandbox defaults so the preview
+        // works on both desktop and mobile browsers behind the HTTPS proxy.
         timeout: 120_000,
         overlay: true,
       },
