@@ -2124,7 +2124,7 @@ function PostgameRecapCard({
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="rounded-md border border-border/60 bg-background/40 px-2 py-1">
                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Skott · {recap.homeTeam} – {recap.awayTeam}
+                  Skott
                 </div>
                 <div className="font-mono tabular-nums">
                   {recap.homeShots ?? "–"} – {recap.awayShots ?? "–"}
