@@ -392,14 +392,19 @@ function Dashboard() {
 
       <main
         className="mx-auto max-w-6xl px-6 py-8 space-y-6"
-        onTouchStart={(e) => {
-          touchStart.current = { x: e.changedTouches[0].screenX, y: e.changedTouches[0].screenY };
-          touchEnd.current = null;
+        onPointerDown={(e) => {
+          if (!isMobile || e.pointerType !== "touch") return;
+          swipeStart.current = { x: e.clientX, y: e.clientY };
+          swipeEnd.current = null;
         }}
-        onTouchMove={(e) => {
-          touchEnd.current = { x: e.changedTouches[0].screenX, y: e.changedTouches[0].screenY };
+        onPointerMove={(e) => {
+          if (!isMobile || e.pointerType !== "touch") return;
+          swipeEnd.current = { x: e.clientX, y: e.clientY };
         }}
-        onTouchEnd={handleSwipeTabChange}
+        onPointerUp={(e) => {
+          if (!isMobile || e.pointerType !== "touch") return;
+          handleSwipeEnd();
+        }}
       >
         <PendingSeasonsBanner
           pending={pendingQuery.data?.pending ?? []}
