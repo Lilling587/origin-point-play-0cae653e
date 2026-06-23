@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { installReloadDiagnostics } from "../lib/reload-diagnostics";
 
 function NotFoundComponent() {
   return (
@@ -115,6 +116,9 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    installReloadDiagnostics();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
