@@ -1600,6 +1600,10 @@ export async function fetchLastMeetingRecap(
     goals: [],
     wentToOvertime: false,
     wentToShootout: false,
+    homeShots: null,
+    awayShots: null,
+    homePim: null,
+    awayPim: null,
   };
   try {
     const res = await fetch(gameUrl, {
