@@ -336,10 +336,8 @@ function Dashboard() {
   const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    console.log("[swipe effect] isMobile", isMobile);
     if (!isMobile) return;
     const el = mainRef.current;
-    console.log("[swipe effect] el", el);
     if (!el) return;
     let start: { x: number; y: number } | null = null;
     let end: { x: number; y: number } | null = null;
