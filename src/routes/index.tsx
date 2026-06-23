@@ -411,12 +411,12 @@ function Dashboard() {
               </TabsTrigger>
             </TabsList>
             <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-initial">
-              <Link to="/compare">
-                <Scale className="mr-2 h-4 w-4 shrink-0" />
-                <span className="sm:hidden">Jämför</span>
-                <span className="hidden sm:inline">Jämför lag</span>
-              </Link>
-            </Button>
+  <Link to="/compare">
+    <Scale className="mr-2 h-4 w-4 shrink-0" />
+    <span className="sm:hidden">HockeyEttan stats</span>
+    <span className="hidden sm:inline">HockeyEttan stats</span>
+  </Link>
+</Button>
             <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-initial">
               <Link to="/notifications">Notiser</Link>
             </Button>
