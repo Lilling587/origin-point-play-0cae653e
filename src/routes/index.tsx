@@ -418,7 +418,7 @@ function Dashboard() {
         </div>
       </header>
 
-      <main ref={mainRef} className="mx-auto max-w-6xl touch-pan-y px-6 py-8 space-y-6">
+      <main className="mx-auto max-w-6xl touch-pan-y px-6 py-8 space-y-6">
         <PendingSeasonsBanner
           pending={pendingQuery.data?.pending ?? []}
           onChanged={() => {
