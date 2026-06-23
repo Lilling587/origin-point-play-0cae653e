@@ -349,6 +349,7 @@ function Dashboard() {
     const threshold = 56;
 
     const onDown = (e: PointerEvent) => {
+      console.log("[swipe] down");
       start = { x: e.clientX, y: e.clientY };
       end = null;
     };
