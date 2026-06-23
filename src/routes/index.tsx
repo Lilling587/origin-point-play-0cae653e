@@ -335,31 +335,28 @@ function Dashboard() {
   const canLoad = home && selectedAway && home !== selectedAway;
   const [activeTab, setActiveTab] = useState<"briefing" | "recap">(() => getLastActiveTab() ?? "briefing");
   const isMobile = useIsMobile();
-  const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setLastActiveTab(activeTab);
   }, [activeTab]);
 
   useEffect(() => {
-    if (!isMobile) return;
-    const el = mainRef.current;
-    if (!el) return;
+    const el = document;
     let start: { x: number; y: number } | null = null;
     let end: { x: number; y: number } | null = null;
     const threshold = 56;
 
     const onDown = (e: PointerEvent) => {
-      if (e.pointerType !== "touch") return;
+      if (window.innerWidth >= 768) return;
       start = { x: e.clientX, y: e.clientY };
       end = null;
     };
     const onMove = (e: PointerEvent) => {
-      if (e.pointerType !== "touch" || !start) return;
+      if (!start || window.innerWidth >= 768) return;
       end = { x: e.clientX, y: e.clientY };
     };
     const onUp = (e: PointerEvent) => {
-      if (e.pointerType !== "touch" || !start || !end) return;
+      if (!start || !end || window.innerWidth >= 768) return;
       const dx = end.x - start.x;
       const dy = end.y - start.y;
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
@@ -377,7 +374,7 @@ function Dashboard() {
       el.removeEventListener("pointermove", onMove);
       el.removeEventListener("pointerup", onUp);
     };
-  }, [isMobile]);
+  }, []);
 
   return (
     <Tabs
@@ -420,7 +417,7 @@ function Dashboard() {
         </div>
       </header>
 
-      <main ref={mainRef} className="mx-auto max-w-6xl px-6 py-8 space-y-6">
+      <main className="mx-auto max-w-6xl touch-pan-y px-6 py-8 space-y-6">
         <PendingSeasonsBanner
           pending={pendingQuery.data?.pending ?? []}
           onChanged={() => {
