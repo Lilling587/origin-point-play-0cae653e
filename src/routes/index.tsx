@@ -2151,15 +2151,19 @@ function PostgameRecapCard({
 
         <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           {firstGoal && (
-            <div>
+            <div className="min-w-0">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
                 Första målet
               </div>
               <div className="font-medium">{firstGoal.teamCode}</div>
-              <div className="truncate text-xs text-muted-foreground">
+              <div className="break-words text-xs text-muted-foreground">
                 {firstGoal.scorer}
-                {firstGoal.time ? ` · ${formatTime(firstGoal.time)}` : ""}
               </div>
+              {firstGoal.time && (
+                <div className="font-mono text-xs tabular-nums text-muted-foreground">
+                  {formatTime(firstGoal.time)}
+                </div>
+              )}
             </div>
           )}
           {gwg && (
