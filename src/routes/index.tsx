@@ -335,7 +335,6 @@ function Dashboard() {
   const canLoad = home && selectedAway && home !== selectedAway;
   const [activeTab, setActiveTab] = useState<"briefing" | "recap">(() => getLastActiveTab() ?? "briefing");
   const isMobile = useIsMobile();
-  const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setLastActiveTab(activeTab);
