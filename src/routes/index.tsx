@@ -390,7 +390,17 @@ function Dashboard() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-8 space-y-6">
+      <main
+        className="mx-auto max-w-6xl px-6 py-8 space-y-6 touch-pan-y overscroll-x-contain"
+        onTouchStart={(e) => {
+          touchStart.current = { x: e.changedTouches[0].screenX, y: e.changedTouches[0].screenY };
+          touchEnd.current = null;
+        }}
+        onTouchMove={(e) => {
+          touchEnd.current = { x: e.changedTouches[0].screenX, y: e.changedTouches[0].screenY };
+        }}
+        onTouchEnd={handleSwipeTabChange}
+      >
         <PendingSeasonsBanner
           pending={pendingQuery.data?.pending ?? []}
           onChanged={() => {
