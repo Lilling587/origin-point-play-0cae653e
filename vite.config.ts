@@ -16,7 +16,14 @@ function keepPreviewAliveAfterDevServerRestart() {
       return code.replace(
         /if \(payload\.event === "vite:ws:disconnect"\) \{[\s\S]*?\n\s*}\n\s*break;/,
         `if (payload.event === "vite:ws:disconnect") {
-\t\t\t\tconsole.info("[vite] server connection lost; keeping the current page alive instead of auto-reloading after restart.");
+\t\t\t\tif (hasDocument && !willUnload) {
+\t\t\t\t\tconsole.info("[vite] server connection lost. Reconnecting without reloading the page...");
+\t\t\t\t\tconst socket = payload.data.webSocket;
+\t\t\t\t\tconst url = new URL(socket.url);
+\t\t\t\t\turl.search = "";
+\t\t\t\t\tawait waitForSuccessfulPing(url.href);
+\t\t\t\t\tawait transport.connect(createHMRHandler(handleMessage));
+\t\t\t\t}
 \t\t\t}
 \t\t\tbreak;`,
       );
