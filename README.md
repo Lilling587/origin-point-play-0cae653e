@@ -125,6 +125,40 @@ Apply these through your Lovable Cloud backend before running the app.
 - `src/start.ts` registers `attachSupabaseAuth`; removing it will break authenticated server functions.
 - The production target is a serverless Worker (Cloudflare). Avoid Node-only packages that rely on `child_process`, native binaries, or filesystem watchers.
 
+## Troubleshooting
+
+### iPhone preview fails while desktop works
+
+If the preview loads in a desktop browser but not on an iPhone, check `vite.config.ts` for hard-coded HMR WebSocket overrides:
+
+```ts
+server: {
+  hmr: {
+    protocol: "wss",
+    clientPort: 443,
+  },
+}
+```
+
+**Why this is a problem:** The Lovable preview is served through an HTTPS proxy, but the sandbox preset already chooses the right WebSocket protocol (`ws` or `wss`) and port based on the current page protocol. Forcing `protocol: "wss"` and `clientPort: 443` can break the HMR connection on iOS because the proxy's routing between the browser and the sandbox is different from a local `localhost` setup. Desktop browsers may tolerate the mismatch; Safari/WebKit on iOS often refuses it and the preview stays blank or reloads.
+
+**Recommended fix:** Remove `protocol` and `clientPort` from `server.hmr` and let the preset handle them. Keep only timing-related options, e.g.:
+
+```ts
+server: {
+  hmr: {
+    timeout: 120_000,
+    overlay: true,
+  },
+}
+```
+
+**How to verify:**
+1. Save the change and wait for the dev server to restart.
+2. Open the preview link in Safari on an iPhone.
+3. Check the preview for at least 15–20 seconds — a broken HMR handshake usually causes a full-page reload or blank screen within the first 10–15 seconds.
+4. On a Mac, open Safari's Develop menu and inspect the connected iPhone. Look at the Console/Network tab for repeated WebSocket errors or `vite` disconnect/reload messages.
+
 ## Deployment
 
 The app is built and deployed through Lovable. If you deploy the build artifact elsewhere, make sure:
