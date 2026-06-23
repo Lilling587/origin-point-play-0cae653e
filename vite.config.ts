@@ -6,6 +6,31 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+function keepPreviewAliveAfterDevServerRestart() {
+  return {
+    name: "keep-preview-alive-after-dev-server-restart",
+    apply: "serve" as const,
+    transform(code: string, id: string) {
+      if (!id.replace(/\\/g, "/").includes("/vite/dist/client/client.mjs")) return null;
+
+      return code.replace(
+        /if \(payload\.event === "vite:ws:disconnect"\) \{[\s\S]*?\n\s*}\n\s*break;/,
+        `if (payload.event === "vite:ws:disconnect") {
+\t\t\t\tif (hasDocument && !willUnload) {
+\t\t\t\t\tconsole.info("[vite] server connection lost. Reconnecting without reloading the page...");
+\t\t\t\t\tconst socket = payload.data.webSocket;
+\t\t\t\t\tconst url = new URL(socket.url);
+\t\t\t\t\turl.search = "";
+\t\t\t\t\tawait waitForSuccessfulPing(url.href);
+\t\t\t\t\tawait transport.connect(createHMRHandler(handleMessage));
+\t\t\t\t}
+\t\t\t}
+\t\t\tbreak;`,
+      );
+    },
+  };
+}
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
@@ -13,6 +38,17 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    plugins: [keepPreviewAliveAfterDevServerRestart()],
+    server: {
+      hmr: {
+        // The preview is served over HTTPS with no explicit port. Without a
+        // clientPort, Vite generates a websocket URL like
+        // `wss://<preview-host>:/`, then falls back to `localhost:8080` from
+        // the browser. That failed websocket path was what caused the delayed
+        // reconnect/reload cycle after a dev-server restart.
+        clientPort: 443,
+      },
+    },
     optimizeDeps: {
       // Disable late dependency discovery: after a cold dev-server restart Vite can
       // discover route-only dependencies several seconds after the page opens and
