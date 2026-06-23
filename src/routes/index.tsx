@@ -332,6 +332,22 @@ function Dashboard() {
 
   const canLoad = home && selectedAway && home !== selectedAway;
   const [activeTab, setActiveTab] = useState<"briefing" | "recap">("briefing");
+  const isMobile = useIsMobile();
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const touchEnd = useRef<{ x: number; y: number } | null>(null);
+
+  const handleSwipeTabChange = () => {
+    if (!isMobile || !touchStart.current || !touchEnd.current) return;
+    const dx = touchEnd.current.x - touchStart.current.x;
+    const dy = touchEnd.current.y - touchStart.current.y;
+    const threshold = 56;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
+      if (dx < 0 && activeTab === "briefing") setActiveTab("recap");
+      if (dx > 0 && activeTab === "recap") setActiveTab("briefing");
+    }
+    touchStart.current = null;
+    touchEnd.current = null;
+  };
 
   return (
     <Tabs
