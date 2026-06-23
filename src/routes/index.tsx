@@ -350,6 +350,7 @@ function Dashboard() {
     const threshold = 56;
 
     const onDown = (e: PointerEvent) => {
+      console.log("[swipe] down", e.clientX, e.clientY);
       start = { x: e.clientX, y: e.clientY };
       end = null;
     };
@@ -358,10 +359,13 @@ function Dashboard() {
       end = { x: e.clientX, y: e.clientY };
     };
     const onUp = (e: PointerEvent) => {
+      console.log("[swipe] up", !!start, !!end);
       if (!start || !end) return;
       const dx = end.x - start.x;
       const dy = end.y - start.y;
+      console.log("[swipe] dx dy", dx, dy);
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
+        console.log("[swipe] switch");
         setActiveTab((prev) => (dx < 0 && prev === "briefing" ? "recap" : dx > 0 && prev === "recap" ? "briefing" : prev));
       }
       start = null;
