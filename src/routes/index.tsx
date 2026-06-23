@@ -341,6 +341,7 @@ function Dashboard() {
   }, [activeTab]);
 
   useEffect(() => {
+    console.log("[swipe] attach");
     const el = document;
     let start: { x: number; y: number } | null = null;
     let end: { x: number; y: number } | null = null;
