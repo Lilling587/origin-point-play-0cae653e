@@ -1454,7 +1454,7 @@ export function getScheduleGames(season: Season): Promise<ScheduleGame[]> {
   return p;
 }
 
-export type { ScheduleGame };
+
 
 
 export type AllTimeH2H = {
