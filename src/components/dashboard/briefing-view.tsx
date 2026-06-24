@@ -95,21 +95,12 @@ export function BriefingView({
         </p>
       </div>
 
-      <div className="flex items-center justify-between" data-export-hide="true">
+      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between" data-export-hide="true">
         <div className="text-xs text-muted-foreground">
           {cached ? "Cached" : "Fresh"} · fetched{" "}
           {new Date(fetchedAt).toLocaleString("sv-SE")}
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePrint}
-            title="Skriv ut briefingen (A4)"
-          >
-            <Printer className="mr-2 h-4 w-4" />
-            Skriv ut
-          </Button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <Button
             variant="outline"
             size="sm"
@@ -123,6 +114,15 @@ export function BriefingView({
               <ImageDown className="mr-2 h-4 w-4" />
             )}
             Share as image
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrint}
+            title="Skriv ut briefingen (A4)"
+          >
+            <Printer className="mr-2 h-4 w-4" />
+            Skriv ut
           </Button>
           <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing}>
             <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
