@@ -1,7 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
-const SOURCE_URL = "https://www.hockeyettan.se/sodra/";
+const SOURCE_URLS = [
+  "https://www.hockeyettan.se/stats/",
+  "https://www.hockeyettan.se/sodra/",
+];
 const NEGATIVE_TTL_MS = 24 * 60 * 60 * 1000;
 const HTML_TTL_MS = 60 * 60 * 1000;
 
@@ -40,11 +43,19 @@ async function getSourceHtml(): Promise<string> {
   if (htmlCache && Date.now() - htmlCache.at < HTML_TTL_MS) {
     return htmlCache.html;
   }
-  const res = await fetch(SOURCE_URL, {
-    headers: { "user-agent": "lovable-team-logos/1.0" },
-  });
-  if (!res.ok) throw new Error(`hockeyettan source ${res.status}`);
-  const html = await res.text();
+  const parts: string[] = [];
+  for (const url of SOURCE_URLS) {
+    try {
+      const res = await fetch(url, {
+        headers: { "user-agent": "lovable-team-logos/1.0" },
+      });
+      if (res.ok) parts.push(await res.text());
+    } catch {
+      // continue with remaining sources
+    }
+  }
+  if (parts.length === 0) throw new Error("hockeyettan sources unavailable");
+  const html = parts.join("\n");
   htmlCache = { html, at: Date.now() };
   return html;
 }
