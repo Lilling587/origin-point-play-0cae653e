@@ -1,0 +1,228 @@
+import { useState } from "react";
+import { ImageDown, Loader2, RefreshCw } from "lucide-react";
+import type { Briefing } from "@/lib/stats.functions";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+import { TeamHeader } from "./cards/team-header";
+import { FormCard } from "./cards/form-card";
+import { VenueStreakCard } from "./cards/venue-streak-card";
+import { PeriodGoalsCard } from "./cards/period-goals-card";
+import { ScorersCard } from "./cards/scorers-card";
+import { GoaliesCard } from "./cards/goalies-card";
+import { ShotVolumeCard } from "./cards/shot-volume-card";
+import { SpecialTeamsCard } from "./cards/special-teams-card";
+import { WinProbabilityCard } from "./cards/win-probability-card";
+import { HottestPlayerCard } from "./cards/hottest-player-card";
+import { StreakAlertsCard } from "./cards/streak-alerts-card";
+import { FormTrendCard } from "./cards/form-trend-card";
+import { RestDaysCard } from "./cards/rest-days-card";
+import { DisciplineCard } from "./cards/discipline-card";
+
+export function BriefingView({
+  data,
+  fetchedAt,
+  cached,
+  refreshing,
+  refreshError,
+  onRefresh,
+}: {
+  data: Briefing;
+  fetchedAt: string;
+  cached: boolean;
+  refreshing: boolean;
+  refreshError: string | null;
+  onRefresh: () => void;
+}) {
+  const [exporting, setExporting] = useState(false);
+  const handleShareImage = async () => {
+    if (typeof window === "undefined") return;
+    const node = document.getElementById("briefing-capture");
+    if (!node) return;
+    setExporting(true);
+    try {
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(node, {
+        pixelRatio: 2,
+        backgroundColor: getComputedStyle(document.body).backgroundColor || "#ffffff",
+        cacheBust: true,
+        filter: (el) =>
+          !(el instanceof HTMLElement && el.dataset.exportHide === "true"),
+      });
+      const filename = `producer-stats-${data.home.name}-vs-${data.away.name}-${new Date(fetchedAt).toISOString().slice(0, 10)}.png`
+        .replace(/\s+/g, "_");
+      const link = document.createElement("a");
+      link.download = filename;
+      link.href = dataUrl;
+      link.click();
+      try {
+        const blob = await (await fetch(dataUrl)).blob();
+        if ("ClipboardItem" in window) {
+          await navigator.clipboard.write([
+            new ClipboardItem({ "image/png": blob }),
+          ]);
+        }
+      } catch {
+        // clipboard not available — download still worked
+      }
+    } catch (err) {
+      console.error("[share-image] failed:", err);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6" id="briefing-capture">
+      <div className="flex items-center justify-between" data-export-hide="true">
+        <div className="text-xs text-muted-foreground">
+          {cached ? "Cached" : "Fresh"} · fetched{" "}
+          {new Date(fetchedAt).toLocaleString("sv-SE")}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleShareImage}
+            disabled={exporting}
+            title="Download briefing as PNG (also copies to clipboard when supported)"
+          >
+            {exporting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <ImageDown className="mr-2 h-4 w-4" />
+            )}
+            Share as image
+          </Button>
+          <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <TeamHeader team={data.home} side="Hemmalag" />
+        <TeamHeader team={data.away} side="Bortalag" />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <FormCard team={data.home} />
+        <FormCard team={data.away} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <VenueStreakCard team={data.home} />
+        <VenueStreakCard team={data.away} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <PeriodGoalsCard team={data.home} refreshing={refreshing} error={refreshError} />
+        <PeriodGoalsCard team={data.away} refreshing={refreshing} error={refreshError} />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Inbördes möten</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {data.headToHead.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Inga tidigare möten denna säsong.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Datum</TableHead>
+                    <TableHead>Hemma</TableHead>
+                    <TableHead>Borta</TableHead>
+                    <TableHead className="text-right">Resultat</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.headToHead.map((g, i) => (
+                    <TableRow key={i}>
+                      <TableCell>{g.date || "—"}</TableCell>
+                      <TableCell>{g.homeTeam}</TableCell>
+                      <TableCell>{g.awayTeam}</TableCell>
+                      <TableCell className="text-right font-mono">
+                        {g.gameId ? (
+                          <a
+                            href={`https://stats.swehockey.se/Game/Events/${g.gameId}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            {g.score} ↗
+                          </a>
+                        ) : (
+                          g.score
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <ScorersCard team={data.home} />
+        <ScorersCard team={data.away} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <GoaliesCard team={data.home} />
+        <GoaliesCard team={data.away} />
+      </div>
+
+      <ShotVolumeCard home={data.home} away={data.away} />
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <SpecialTeamsCard team={data.home} opponent={data.away} />
+        <SpecialTeamsCard team={data.away} opponent={data.home} />
+      </div>
+
+      <WinProbabilityCard home={data.home} away={data.away} />
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <HottestPlayerCard team={data.home} label="Hemmalag" />
+        <HottestPlayerCard team={data.away} label="Bortalag" />
+      </div>
+
+      <StreakAlertsCard home={data.home} away={data.away} />
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <FormTrendCard team={data.home} />
+        <FormTrendCard team={data.away} />
+      </div>
+
+      <RestDaysCard home={data.home} away={data.away} />
+
+      <DisciplineCard home={data.home} away={data.away} />
+
+      {data.notes ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Anteckningar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{data.notes}</p>
+          </CardContent>
+        </Card>
+      ) : null}
+    </div>
+  );
+}
