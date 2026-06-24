@@ -1445,7 +1445,7 @@ async function fetchAllScheduleGames(urls: Urls): Promise<ScheduleGame[]> {
 // (and now buildBriefing's venue form / period goals / last-five-fallback)
 // share work within a request. Keyed by competitionId.
 const scheduleCache = new Map<string, Promise<ScheduleGame[]>>();
-function getScheduleGames(season: Season): Promise<ScheduleGame[]> {
+export function getScheduleGames(season: Season): Promise<ScheduleGame[]> {
   const key = season.competitionId;
   const existing = scheduleCache.get(key);
   if (existing) return existing;
@@ -1456,6 +1456,9 @@ function getScheduleGames(season: Season): Promise<ScheduleGame[]> {
   scheduleCache.set(key, p);
   return p;
 }
+
+export type { ScheduleGame };
+
 
 export type AllTimeH2H = {
   totals: { wins: number; ties: number; losses: number; otWins: number; otLosses: number };
