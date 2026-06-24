@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertCircle,
+  CalendarDays,
   Check,
   Info,
   Loader2,
@@ -28,6 +29,7 @@ import {
   Star,
   X,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 import {
   DEFAULT_FAVORITE_TEAM,
