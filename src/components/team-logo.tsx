@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { TEAM_LOGO_OVERRIDES } from "@/lib/team-logos";
+import { TEAM_LOGO_OVERRIDES, TEAM_CODE_OVERRIDES } from "@/lib/team-logos";
 
 type Size = "xs" | "sm" | "md" | "lg";
 
@@ -19,21 +19,57 @@ function hashString(input: string): number {
 }
 
 function initials(team: string): string {
-  // Strip common club suffixes for nicer initials.
-  const cleaned = team
-    .replace(/\s+(HC|IF|IK|BK|HK|SK|FF)\b/gi, " $1")
+  const code = TEAM_CODE_OVERRIDES[team];
+  if (code) return code;
+
+  // Fallback: build a Swehockey-style abbreviation from the team name.
+  const normalized = team
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\/-]/g, " ")
     .trim();
-  const words = cleaned
+  const words = normalized
     .split(/\s+/)
     .filter((w) => /[A-Za-zÅÄÖåäö]/.test(w));
   if (words.length === 0) return team.slice(0, 2).toUpperCase();
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-  // Prefer first-letter of first two words. If the last word is a short club
-  // marker (IK, HC, BK...) include it as third character.
-  const base = (words[0][0] + words[1][0]).toUpperCase();
-  const last = words[words.length - 1];
-  if (last.length <= 3 && /^[A-ZÅÄÖ]+$/.test(last)) return last.toUpperCase().slice(0, 3);
-  return base;
+
+  const knownClubs = new Set([
+    "HC", "IF", "IK", "BK", "AIF", "HK", "SK", "FF", "SoSS", "GoIS", "BoIS",
+  ]);
+  const upperWords = words.map((w) => w.toUpperCase());
+
+  const suffix: string[] = [];
+  let i = words.length - 1;
+  while (i >= 0 && knownClubs.has(upperWords[i])) {
+    suffix.unshift(words[i]);
+    i--;
+  }
+
+  const location: string[] = [];
+  const middle: string[] = [];
+  for (let j = 0; j <= i; j++) {
+    if (knownClubs.has(upperWords[j])) {
+      middle.push(words[j]);
+    } else {
+      location.push(words[j]);
+    }
+  }
+
+  const locationInitials = location.map((w) => w[0]).join("");
+  const middlePart = middle.join("");
+  const suffixPart = suffix.join("");
+
+  let abbr = (locationInitials + middlePart + suffixPart).toUpperCase();
+  if (abbr.length === 0) {
+    abbr = words.map((w) => w[0]).join("").toUpperCase();
+  }
+
+  // Keep a readable length when a mid-name abbreviation makes the result long.
+  if (abbr.length > 5 && middlePart.length > 0) {
+    abbr = (locationInitials + middlePart).toUpperCase();
+  }
+
+  return abbr.slice(0, 5);
 }
 
 export function TeamLogo({
