@@ -540,3 +540,39 @@ export const getSeasonSchedule = createServerFn({ method: "POST" })
 
 
 
+
+// ---------- League-wide players (/spelare) ----------
+
+export type LeaguePlayer = {
+  team: string;
+  name: string;
+  position: string;
+  gamesPlayed: number | null;
+  goals: number | null;
+  assists: number | null;
+  points: number | null;
+  pim: number | null;
+};
+
+export type LeaguePlayersResult = {
+  season: string;
+  players: LeaguePlayer[];
+};
+
+export const getLeaguePlayers = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({ season: z.string().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data }): Promise<LeaguePlayersResult> => {
+    const season = await resolveSeason(data.season);
+    const key = `leaguePlayers:${CACHE_VERSION}:${season.label}`;
+    const { getCached, setCached, fetchAllLeaguePlayers } = await import(
+      "./stats.server"
+    );
+    const cached = await getCached(key, CACHE_TTL_MS);
+    if (cached) return cached as LeaguePlayersResult;
+    const players = await fetchAllLeaguePlayers(season);
+    const payload: LeaguePlayersResult = { season: season.label, players };
+    await setCached(key, payload);
+    return payload;
+  });

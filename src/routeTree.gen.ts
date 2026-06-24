@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SpelareRouteImport } from './routes/spelare'
 import { Route as SchemaRouteImport } from './routes/schema'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -19,6 +20,11 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as ApiPublicHooksPregameEmailsRouteImport } from './routes/api/public/hooks/pregame-emails'
 import { Route as ApiPublicHooksPostgameEmailsRouteImport } from './routes/api/public/hooks/postgame-emails'
 
+const SpelareRoute = SpelareRouteImport.update({
+  id: '/spelare',
+  path: '/spelare',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SchemaRoute = SchemaRouteImport.update({
   id: '/schema',
   path: '/schema',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
   '/schema': typeof SchemaRoute
+  '/spelare': typeof SpelareRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/index/': typeof IndexIndexRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
   '/schema': typeof SchemaRoute
+  '/spelare': typeof SpelareRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/index': typeof IndexIndexRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
   '/schema': typeof SchemaRoute
+  '/spelare': typeof SpelareRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/index/': typeof IndexIndexRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/compare'
     | '/schema'
+    | '/spelare'
     | '/notifications'
     | '/index/'
     | '/api/public/hooks/postgame-emails'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/compare'
     | '/schema'
+    | '/spelare'
     | '/notifications'
     | '/index'
     | '/api/public/hooks/postgame-emails'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/compare'
     | '/schema'
+    | '/spelare'
     | '/_authenticated/notifications'
     | '/index/'
     | '/api/public/hooks/postgame-emails'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CompareRoute: typeof CompareRoute
   SchemaRoute: typeof SchemaRoute
+  SpelareRoute: typeof SpelareRoute
   IndexIndexRoute: typeof IndexIndexRoute
   ApiPublicHooksPostgameEmailsRoute: typeof ApiPublicHooksPostgameEmailsRoute
   ApiPublicHooksPregameEmailsRoute: typeof ApiPublicHooksPregameEmailsRoute
@@ -146,6 +159,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/spelare': {
+      id: '/spelare'
+      path: '/spelare'
+      fullPath: '/spelare'
+      preLoaderRoute: typeof SpelareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/schema': {
       id: '/schema'
       path: '/schema'
@@ -229,6 +249,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CompareRoute: CompareRoute,
   SchemaRoute: SchemaRoute,
+  SpelareRoute: SpelareRoute,
   IndexIndexRoute: IndexIndexRoute,
   ApiPublicHooksPostgameEmailsRoute: ApiPublicHooksPostgameEmailsRoute,
   ApiPublicHooksPregameEmailsRoute: ApiPublicHooksPregameEmailsRoute,
@@ -236,13 +257,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
