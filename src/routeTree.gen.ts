@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SpelareRouteImport } from './routes/spelare'
 import { Route as SchemaRouteImport } from './routes/schema'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -29,6 +30,11 @@ const SpelareRoute = SpelareRouteImport.update({
 const SchemaRoute = SchemaRouteImport.update({
   id: '/schema',
   path: '/schema',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompareRoute = CompareRouteImport.update({
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/schema': typeof SchemaRoute
   '/spelare': typeof SpelareRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/schema': typeof SchemaRoute
   '/spelare': typeof SpelareRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/schema': typeof SchemaRoute
   '/spelare': typeof SpelareRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/compare'
+    | '/reset-password'
     | '/schema'
     | '/spelare'
     | '/notifications'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/compare'
+    | '/reset-password'
     | '/schema'
     | '/spelare'
     | '/notifications'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/compare'
+    | '/reset-password'
     | '/schema'
     | '/spelare'
     | '/_authenticated/notifications'
@@ -162,6 +174,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CompareRoute: typeof CompareRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SchemaRoute: typeof SchemaRoute
   SpelareRoute: typeof SpelareRoute
   IndexIndexRoute: typeof IndexIndexRoute
@@ -183,6 +196,13 @@ declare module '@tanstack/react-router' {
       path: '/schema'
       fullPath: '/schema'
       preLoaderRoute: typeof SchemaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compare': {
@@ -269,6 +289,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CompareRoute: CompareRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SchemaRoute: SchemaRoute,
   SpelareRoute: SpelareRoute,
   IndexIndexRoute: IndexIndexRoute,
