@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { SeasonPicker } from "@/components/dashboard/season-picker";
 import { SearchableTeamPicker } from "@/components/dashboard/searchable-team-picker";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { TeamLogo } from "@/components/team-logo";
 import { translateError } from "@/lib/error-messages";
 
 const seasonsQO = queryOptions({
@@ -218,7 +219,8 @@ function SchemaPage() {
                     <div className="w-32 shrink-0 text-muted-foreground">
                       {formatSwedishDate(g.date)}
                     </div>
-                    <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <TeamLogo team={g.homeTeam} size="sm" />
                       <span
                         className={
                           teamFilter === g.homeTeam ? "font-semibold" : ""
@@ -226,7 +228,8 @@ function SchemaPage() {
                       >
                         {g.homeTeam}
                       </span>
-                      <span className="mx-2 text-muted-foreground">vs</span>
+                      <span className="mx-1 text-muted-foreground">vs</span>
+                      <TeamLogo team={g.awayTeam} size="sm" />
                       <span
                         className={
                           teamFilter === g.awayTeam ? "font-semibold" : ""

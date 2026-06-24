@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { TeamLogo } from "@/components/team-logo";
 import type { TeamData } from "@/lib/dashboard-utils";
 
 export function TeamHeader({ team, side }: { team: TeamData; side: string }) {
@@ -12,7 +13,10 @@ export function TeamHeader({ team, side }: { team: TeamData; side: string }) {
             {team.gamesPlayed != null ? `${team.gamesPlayed} GP` : "—"}
           </span>
         </div>
-        <CardTitle className="mt-2 text-xl">{team.name}</CardTitle>
+        <CardTitle className="mt-2 flex items-center gap-3 text-xl">
+          <TeamLogo team={team.name} size="lg" />
+          <span className="min-w-0 truncate">{team.name}</span>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex items-baseline gap-4">

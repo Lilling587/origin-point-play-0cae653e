@@ -1,0 +1,307 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useMemo, useState } from "react";
+import { queryOptions, useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Loader2, Search, Users } from "lucide-react";
+
+import { listSeasons, getLeaguePlayers } from "@/lib/stats.functions";
+import type { LeaguePlayer } from "@/lib/stats.functions";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { SeasonPicker } from "@/components/dashboard/season-picker";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { TeamLogo } from "@/components/team-logo";
+import { translateError } from "@/lib/error-messages";
+
+const seasonsQO = queryOptions({
+  queryKey: ["seasons"],
+  queryFn: () => listSeasons(),
+  staleTime: 24 * 60 * 60 * 1000,
+});
+
+export const Route = createFileRoute("/spelare")({
+  head: () => ({
+    meta: [
+      { title: "Spelare — HockeyEttan Södra" },
+      {
+        name: "description",
+        content:
+          "Sök bland alla spelare i HockeyEttan Södra över hela ligan — poäng, mål, assist och utvisningsminuter.",
+      },
+    ],
+  }),
+  loader: async ({ context }) => {
+    const seasons = await context.queryClient.ensureQueryData(seasonsQO);
+    return { defaultSeason: seasons.default.label };
+  },
+  component: PlayersPage,
+});
+
+type SortKey = "points" | "goals" | "assists" | "gp" | "pim";
+type PosFilter = "all" | "F" | "D" | "G";
+
+function matchPosition(filter: PosFilter, pos: string): boolean {
+  if (filter === "all") return true;
+  if (filter === "G") return /g/i.test(pos);
+  if (filter === "D") return /d/i.test(pos) && !/g/i.test(pos);
+  // Forwards = anything not D and not G.
+  return !/d|g/i.test(pos);
+}
+
+function PlayersPage() {
+  const { defaultSeason } = Route.useLoaderData();
+  const fetchSeasons = useServerFn(listSeasons);
+  const fetchPlayers = useServerFn(getLeaguePlayers);
+
+  const seasonsQuery = useQuery({
+    queryKey: ["seasons"],
+    queryFn: () => fetchSeasons(),
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+
+  const [season, setSeason] = useState<string>(defaultSeason);
+  const activeSeason = season || defaultSeason;
+  const [query, setQuery] = useState("");
+  const [pos, setPos] = useState<PosFilter>("all");
+  const [sort, setSort] = useState<SortKey>("points");
+
+  const playersQuery = useQuery({
+    queryKey: ["league-players", activeSeason],
+    queryFn: () => fetchPlayers({ data: { season: activeSeason } }),
+    enabled: !!activeSeason,
+    staleTime: 60 * 60 * 1000,
+  });
+
+  const filtered = useMemo(() => {
+    const all = playersQuery.data?.players ?? [];
+    const q = query.trim().toLowerCase();
+    const matched = all.filter((p) => {
+      if (!matchPosition(pos, p.position)) return false;
+      if (!q) return true;
+      return (
+        p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q)
+      );
+    });
+    const key = sort;
+    const get = (p: LeaguePlayer): number => {
+      if (key === "gp") return p.gamesPlayed ?? -1;
+      if (key === "goals") return p.goals ?? -1;
+      if (key === "assists") return p.assists ?? -1;
+      if (key === "pim") return p.pim ?? -1;
+      return p.points ?? -1;
+    };
+    return matched.slice().sort((a, b) => get(b) - get(a));
+  }, [playersQuery.data, query, pos, sort]);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight sm:text-2xl">
+              <Users className="h-5 w-5" />
+              Spelare
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              HockeyEttan Södra · sök bland alla spelare i ligan
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link to="/">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Tillbaka
+              </Link>
+            </Button>
+            <ThemeToggle />
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-6xl space-y-6 px-6 py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Filter</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <SeasonPicker
+                value={activeSeason}
+                onChange={setSeason}
+                seasons={(seasonsQuery.data?.seasons ?? []).map((s) => s.label)}
+                loading={seasonsQuery.isLoading}
+              />
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="player-search"
+                  className="text-sm font-medium leading-none"
+                >
+                  Sök spelare eller lag
+                </label>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="player-search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="t.ex. Berndtsson eller Grästorps"
+                    className="pl-8"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {(
+                [
+                  ["all", "Alla"],
+                  ["F", "Forwards"],
+                  ["D", "Backar"],
+                  ["G", "Målvakter"],
+                ] as Array<[PosFilter, string]>
+              ).map(([key, label]) => (
+                <Button
+                  key={key}
+                  size="sm"
+                  variant={pos === key ? "default" : "outline"}
+                  onClick={() => setPos(key)}
+                >
+                  {label}
+                </Button>
+              ))}
+              <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+                <span>Sortera:</span>
+                {(
+                  [
+                    ["points", "P"],
+                    ["goals", "G"],
+                    ["assists", "A"],
+                    ["gp", "GP"],
+                    ["pim", "PIM"],
+                  ] as Array<[SortKey, string]>
+                ).map(([key, label]) => (
+                  <Button
+                    key={key}
+                    size="sm"
+                    variant={sort === key ? "default" : "ghost"}
+                    onClick={() => setSort(key)}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {playersQuery.isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Laddar spelare…
+          </div>
+        ) : playersQuery.isError ? (
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {translateError(playersQuery.error)}
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Inga spelare matchar din sökning.
+          </p>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                {filtered.length} spelare
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {/* Desktop table */}
+              <div className="hidden overflow-x-auto sm:block">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-2 w-10">#</th>
+                      <th className="px-4 py-2">Namn</th>
+                      <th className="px-4 py-2">Lag</th>
+                      <th className="px-2 py-2">Pos</th>
+                      <th className="px-2 py-2 text-right">GP</th>
+                      <th className="px-2 py-2 text-right">G</th>
+                      <th className="px-2 py-2 text-right">A</th>
+                      <th className="px-2 py-2 text-right">P</th>
+                      <th className="px-2 py-2 text-right">PIM</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filtered.slice(0, 500).map((p, i) => (
+                      <tr key={`${p.team}-${p.name}-${i}`}>
+                        <td className="px-4 py-2 text-muted-foreground">
+                          {i + 1}
+                        </td>
+                        <td className="px-4 py-2 font-medium">{p.name}</td>
+                        <td className="px-4 py-2">
+                          <span className="flex items-center gap-2">
+                            <TeamLogo team={p.team} size="sm" />
+                            {p.team}
+                          </span>
+                        </td>
+                        <td className="px-2 py-2 text-muted-foreground">
+                          {p.position}
+                        </td>
+                        <td className="px-2 py-2 text-right tabular-nums">
+                          {p.gamesPlayed ?? "—"}
+                        </td>
+                        <td className="px-2 py-2 text-right tabular-nums">
+                          {p.goals ?? "—"}
+                        </td>
+                        <td className="px-2 py-2 text-right tabular-nums">
+                          {p.assists ?? "—"}
+                        </td>
+                        <td className="px-2 py-2 text-right font-semibold tabular-nums">
+                          {p.points ?? "—"}
+                        </td>
+                        <td className="px-2 py-2 text-right tabular-nums">
+                          {p.pim ?? "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile cards */}
+              <ul className="divide-y divide-border sm:hidden">
+                {filtered.slice(0, 200).map((p, i) => (
+                  <li
+                    key={`m-${p.team}-${p.name}-${i}`}
+                    className="flex items-center gap-3 px-4 py-3"
+                  >
+                    <span className="w-6 shrink-0 text-xs text-muted-foreground">
+                      {i + 1}
+                    </span>
+                    <TeamLogo team={p.team} size="md" />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">
+                        {p.name}
+                      </div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {p.team} · {p.position}
+                      </div>
+                    </div>
+                    <div className="text-right text-xs tabular-nums">
+                      <div className="text-sm font-semibold">
+                        {p.points ?? "—"} P
+                      </div>
+                      <div className="text-muted-foreground">
+                        {p.goals ?? 0}+{p.assists ?? 0} · {p.gamesPlayed ?? "—"} GP
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+      </main>
+    </div>
+  );
+}
