@@ -27,10 +27,18 @@ type Mode = "signin" | "signup" | "forgot";
 
 function AuthPage() {
   const navigate = useNavigate();
+  const search = useSearch({ from: "/auth" });
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (search.message === "password-reset") {
+      toast.success("Password reset successfully. Sign in with your new password.");
+      navigate({ to: "/auth", search: {}, replace: true });
+    }
+  }, [search.message, navigate]);
 
   useEffect(() => {
     let cancelled = false;
