@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { TEAM_LOGO_OVERRIDES, TEAM_CODE_OVERRIDES } from "@/lib/team-logos";
+import { useTeamLogo } from "@/hooks/use-team-logos";
 
 type Size = "xs" | "sm" | "md" | "lg";
 
@@ -82,14 +83,18 @@ export function TeamLogo({
   className?: string;
 }) {
   const override = TEAM_LOGO_OVERRIDES[team];
+  const cached = useTeamLogo(team);
   const sizeCls = SIZE_CLASSES[size];
+  const src = override ?? cached;
 
-  if (override) {
+  if (src) {
     return (
       <img
-        src={override}
+        src={src}
         alt={`${team} logotyp`}
-        className={cn("rounded-md object-cover", sizeCls, className)}
+        loading="lazy"
+        decoding="async"
+        className={cn("rounded-md object-contain", sizeCls, className)}
       />
     );
   }
