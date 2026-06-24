@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SchemaRouteImport } from './routes/schema'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -18,6 +19,11 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as ApiPublicHooksPregameEmailsRouteImport } from './routes/api/public/hooks/pregame-emails'
 import { Route as ApiPublicHooksPostgameEmailsRouteImport } from './routes/api/public/hooks/postgame-emails'
 
+const SchemaRoute = SchemaRouteImport.update({
+  id: '/schema',
+  path: '/schema',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CompareRoute = CompareRouteImport.update({
   id: '/compare',
   path: '/compare',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
+  '/schema': typeof SchemaRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/index/': typeof IndexIndexRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
+  '/schema': typeof SchemaRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/index': typeof IndexIndexRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
+  '/schema': typeof SchemaRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/index/': typeof IndexIndexRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/compare'
+    | '/schema'
     | '/notifications'
     | '/index/'
     | '/api/public/hooks/postgame-emails'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/compare'
+    | '/schema'
     | '/notifications'
     | '/index'
     | '/api/public/hooks/postgame-emails'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/compare'
+    | '/schema'
     | '/_authenticated/notifications'
     | '/index/'
     | '/api/public/hooks/postgame-emails'
@@ -126,6 +138,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CompareRoute: typeof CompareRoute
+  SchemaRoute: typeof SchemaRoute
   IndexIndexRoute: typeof IndexIndexRoute
   ApiPublicHooksPostgameEmailsRoute: typeof ApiPublicHooksPostgameEmailsRoute
   ApiPublicHooksPregameEmailsRoute: typeof ApiPublicHooksPregameEmailsRoute
@@ -133,6 +146,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/schema': {
+      id: '/schema'
+      path: '/schema'
+      fullPath: '/schema'
+      preLoaderRoute: typeof SchemaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/compare': {
       id: '/compare'
       path: '/compare'
@@ -208,6 +228,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CompareRoute: CompareRoute,
+  SchemaRoute: SchemaRoute,
   IndexIndexRoute: IndexIndexRoute,
   ApiPublicHooksPostgameEmailsRoute: ApiPublicHooksPostgameEmailsRoute,
   ApiPublicHooksPregameEmailsRoute: ApiPublicHooksPregameEmailsRoute,

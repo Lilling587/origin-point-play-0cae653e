@@ -491,6 +491,51 @@ export const getLeagueOverview = createServerFn({ method: "POST" })
     return overview as LeagueOverviewResult;
   });
 
+// ---------- Season schedule (full fixture list) ----------
+
+export type ScheduleEntry = {
+  id: string | null;
+  date: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeGoals: number | null;
+  awayGoals: number | null;
+  played: boolean;
+};
+
+export type ScheduleResult = {
+  season: string;
+  games: ScheduleEntry[];
+};
+
+export const getSeasonSchedule = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({ season: z.string().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const season = await resolveSeason(data.season);
+    const key = `schedule:${CACHE_VERSION}:${season.label}`;
+    const { getCached, setCached, getScheduleGames } = await import(
+      "./stats.server"
+    );
+    const cached = await getCached(key, CACHE_TTL_MS);
+    if (cached) return cached as ScheduleResult;
+    const raw = await getScheduleGames(season);
+    const games: ScheduleEntry[] = raw.map((g) => ({
+      id: g.id,
+      date: g.date,
+      homeTeam: g.homeTeam,
+      awayTeam: g.awayTeam,
+      homeGoals: g.homeGoals,
+      awayGoals: g.awayGoals,
+      played: g.played,
+    }));
+    const payload: ScheduleResult = { season: season.label, games };
+    await setCached(key, payload);
+    return payload;
+  });
+
+
 
 
 

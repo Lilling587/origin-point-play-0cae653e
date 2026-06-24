@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertCircle,
+  CalendarDays,
   Check,
   Info,
   Loader2,
@@ -28,6 +29,7 @@ import {
   Star,
   X,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 import {
   DEFAULT_FAVORITE_TEAM,
@@ -448,6 +450,12 @@ function Dashboard() {
               </TabsTrigger>
             </TabsList>
             <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-initial">
+              <Link to="/schema">
+                <CalendarDays className="mr-2 h-4 w-4 shrink-0" />
+                Spelschema
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-initial">
               <Link to="/compare">
                 <Scale className="mr-2 h-4 w-4 shrink-0" />
                 <span className="sm:hidden">HockeyEttan stats</span>
@@ -457,6 +465,7 @@ function Dashboard() {
             <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-initial">
               <Link to="/notifications">Logga in</Link>
             </Button>
+            <ThemeToggle className="shrink-0" />
           </div>
         </div>
       </header>

@@ -1366,7 +1366,7 @@ export async function findMatchupOnDate(
 
 // ---------- Historical depth helpers ----------
 
-type ScheduleGame = {
+export type ScheduleGame = {
   id: string | null;
   date: string;
   homeTeam: string;
@@ -1374,13 +1374,10 @@ type ScheduleGame = {
   homeGoals: number | null;
   awayGoals: number | null;
   periodCount: number;
-  // Per-period [home, away] goal pairs, in order (P1, P2, P3, then any OT
-  // periods appended). Populated once here so every consumer — venue form,
-  // period-goals totals, last-five, etc. — can derive what it needs without
-  // re-fetching or re-parsing the schedule page itself.
   periods: Array<[number, number]>;
   played: boolean;
 };
+
 
 // Parse every row from a season's schedule page into structured game records.
 // Includes both played and unplayed games; played games carry a numeric score
@@ -1445,7 +1442,7 @@ async function fetchAllScheduleGames(urls: Urls): Promise<ScheduleGame[]> {
 // (and now buildBriefing's venue form / period goals / last-five-fallback)
 // share work within a request. Keyed by competitionId.
 const scheduleCache = new Map<string, Promise<ScheduleGame[]>>();
-function getScheduleGames(season: Season): Promise<ScheduleGame[]> {
+export function getScheduleGames(season: Season): Promise<ScheduleGame[]> {
   const key = season.competitionId;
   const existing = scheduleCache.get(key);
   if (existing) return existing;
@@ -1456,6 +1453,9 @@ function getScheduleGames(season: Season): Promise<ScheduleGame[]> {
   scheduleCache.set(key, p);
   return p;
 }
+
+
+
 
 export type AllTimeH2H = {
   totals: { wins: number; ties: number; losses: number; otWins: number; otLosses: number };
