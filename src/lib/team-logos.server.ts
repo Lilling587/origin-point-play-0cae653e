@@ -1,7 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
-const SOURCE_URL = "https://www.hockeyettan.se/sodra/";
+const SOURCE_URLS = [
+  "https://www.hockeyettan.se/stats/",
+  "https://www.hockeyettan.se/sodra/",
+];
 const NEGATIVE_TTL_MS = 24 * 60 * 60 * 1000;
 const HTML_TTL_MS = 60 * 60 * 1000;
 
