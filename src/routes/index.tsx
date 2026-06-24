@@ -24,13 +24,17 @@ import {
   Check,
   Info,
   Loader2,
+  LogOut,
   RefreshCw,
   Scale,
+  Settings,
+  Shield,
   Star,
   Users,
   X,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { supabase } from "@/integrations/supabase/client";
 
 import {
   DEFAULT_FAVORITE_TEAM,
