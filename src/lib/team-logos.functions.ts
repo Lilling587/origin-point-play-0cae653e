@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 
 export const getTeamLogos = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ logos: Record<string, string>; fetchedAt: string }> => {
