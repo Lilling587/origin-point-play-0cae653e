@@ -441,12 +441,10 @@ function Dashboard() {
           <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
             <TabsList className="hidden sm:flex w-full sm:w-auto">
               <TabsTrigger value="briefing" className="flex-1 sm:flex-initial">
-                <span className="sm:hidden">Briefing</span>
-                <span className="hidden sm:inline">Matchbriefing</span>
+                Matchbriefing
               </TabsTrigger>
               <TabsTrigger value="recap" className="flex-1 sm:flex-initial">
-                <span className="sm:hidden">Recap</span>
-                <span className="hidden sm:inline">Postgame recap</span>
+                Postgame recap
               </TabsTrigger>
             </TabsList>
             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
@@ -475,10 +473,10 @@ function Dashboard() {
         <div className="mx-auto max-w-6xl px-4 py-2">
           <TabsList className="w-full">
             <TabsTrigger value="briefing" className="flex-1">
-              Briefing
+              Matchbriefing
             </TabsTrigger>
             <TabsTrigger value="recap" className="flex-1">
-              Recap
+              Postgame recap
             </TabsTrigger>
           </TabsList>
         </div>
