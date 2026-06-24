@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, RotateCcw, Search, Users, X } from "lucide-react";
 
 import { listSeasons, getLeaguePlayers } from "@/lib/stats.functions";
@@ -13,12 +12,6 @@ import { SeasonPicker } from "@/components/dashboard/season-picker";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TeamLogo } from "@/components/team-logo";
 import { translateError } from "@/lib/error-messages";
-
-const seasonsQO = queryOptions({
-  queryKey: ["seasons"],
-  queryFn: () => listSeasons(),
-  staleTime: 24 * 60 * 60 * 1000,
-});
 
 export const Route = createFileRoute("/spelare")({
   head: () => ({
