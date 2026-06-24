@@ -142,3 +142,65 @@
     color: var(--color-foreground);
   }
 }
+
+/* ============= Print styles =============
+ * Make the briefing printable as an A4 cheat-sheet for producers.
+ * Hide app chrome (header, tabs, pickers, action buttons) and keep cards intact.
+ */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  header,
+  [role="tablist"],
+  .no-print,
+  [data-export-hide="true"] {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  [data-slot="card"],
+  .print-avoid-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #d4d4d4 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .space-y-6 > * + * {
+    margin-top: 0.75rem !important;
+  }
+
+  a {
+    color: #000000 !important;
+    text-decoration: none !important;
+  }
+
+  .animate-spin,
+  .animate-pulse {
+    animation: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+}
+
+.print-only {
+  display: none;
+}
