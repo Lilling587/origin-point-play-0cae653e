@@ -359,6 +359,67 @@ function Dashboard() {
     };
   }, []);
 
+  // Keyboard shortcuts (skipped while typing in inputs/textareas)
+  useEffect(() => {
+    const isTypingTarget = (t: EventTarget | null) => {
+      if (!(t instanceof HTMLElement)) return false;
+      const tag = t.tagName;
+      return (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        t.isContentEditable
+      );
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (isTypingTarget(e.target)) return;
+      switch (e.key) {
+        case "1":
+          e.preventDefault();
+          setActiveTab("briefing");
+          break;
+        case "2":
+          e.preventDefault();
+          setActiveTab("recap");
+          break;
+        case "l":
+        case "L":
+          if (canLoad && !briefingMut.isPending) {
+            e.preventDefault();
+            handleLoadBriefing();
+          }
+          break;
+        case "r":
+        case "R":
+          if (briefing && !briefingMut.isPending) {
+            e.preventDefault();
+            briefingMut.mutate({ home, away: selectedAway, force: true });
+          }
+          break;
+        case "p":
+        case "P":
+          if (briefing) {
+            e.preventDefault();
+            window.print();
+          }
+          break;
+        case "?":
+          e.preventDefault();
+          import("sonner").then(({ toast }) =>
+            toast("Kortkommandon", {
+              description:
+                "1 = Briefing · 2 = Recap · L = Ladda · R = Uppdatera · P = Skriv ut",
+            }),
+          );
+          break;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canLoad, briefing, briefingMut.isPending, home, selectedAway]);
+
   return (
     <Tabs
       value={activeTab}
