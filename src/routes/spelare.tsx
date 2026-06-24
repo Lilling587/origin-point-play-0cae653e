@@ -94,6 +94,37 @@ function PlayersPage() {
     return matched.slice().sort((a, b) => get(b) - get(a));
   }, [playersQuery.data, query, pos, sort]);
 
+  const posLabel: Record<PosFilter, string> = {
+    all: "Alla",
+    F: "Forwards",
+    D: "Backar",
+    G: "Målvakter",
+  };
+  const sortLabel: Record<SortKey, string> = {
+    points: "poäng",
+    goals: "mål",
+    assists: "assist",
+    gp: "matcher",
+    pim: "PIM",
+  };
+
+  const filtersDirty =
+    query.trim().length > 0 || pos !== "all" || sort !== "points";
+  const activeFilterSummary = [
+    query.trim() ? `Sök: "${query.trim()}"` : null,
+    pos !== "all" ? `Position: ${posLabel[pos]}` : null,
+    sort !== "points" ? `Sorterat på: ${sortLabel[sort]}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const resetFilters = () => {
+    setQuery("");
+    setPos("all");
+    setSort("points");
+  };
+
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border">
