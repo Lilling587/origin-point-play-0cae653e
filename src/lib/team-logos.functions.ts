@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 
 export const getTeamLogos = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ logos: Record<string, string>; fetchedAt: string }> => {
@@ -32,7 +32,7 @@ export type TeamLogoStatus = {
 };
 
 export const listTeamLogoStatus = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async (): Promise<{ rows: TeamLogoStatus[] }> => {
     const { listAllTeamLogoStatus } = await import("./team-logos.server");
     const rows = await listAllTeamLogoStatus();
@@ -40,7 +40,7 @@ export const listTeamLogoStatus = createServerFn({ method: "GET" })
   });
 
 export const setTeamLogoOverride = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((input: unknown) =>
     z
       .object({
@@ -56,7 +56,7 @@ export const setTeamLogoOverride = createServerFn({ method: "POST" })
   });
 
 export const clearTeamLogoCache = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((input: unknown) =>
     z.object({ team: z.string().min(1) }).parse(input),
   )
