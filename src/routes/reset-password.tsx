@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/reset-password")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Reset password" },
