@@ -37,6 +37,7 @@ import {
   setLastActiveTab,
 } from "@/lib/preferences";
 import { useIsMobile as _useIsMobile } from "@/hooks/use-mobile";
+import { translateError } from "@/lib/error-messages";
 
 import { SeasonPicker } from "@/components/dashboard/season-picker";
 import { SearchableTeamPicker } from "@/components/dashboard/searchable-team-picker";
@@ -72,7 +73,7 @@ function RouteError({ error, reset }: { error: Error; reset: () => void }) {
     <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="flex items-center gap-3 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
         <AlertCircle className="h-4 w-4 shrink-0" />
-        <span className="flex-1">Failed to load team list: {error.message}</span>
+        <span className="flex-1">Kunde inte ladda laglistan: {translateError(error)}</span>
         <Button
           variant="outline"
           size="sm"
@@ -83,7 +84,7 @@ function RouteError({ error, reset }: { error: Error; reset: () => void }) {
           }}
         >
           <RefreshCw className="h-3 w-3" />
-          Retry
+          Försök igen
         </Button>
       </div>
     </div>
