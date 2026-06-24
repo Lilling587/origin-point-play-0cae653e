@@ -121,8 +121,24 @@ function PlayersPage() {
 
       <main className="mx-auto max-w-6xl space-y-6 px-6 py-8">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Filter</CardTitle>
+          <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
+            <div className="min-w-0">
+              <CardTitle className="text-base">Filter</CardTitle>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {filtersDirty
+                  ? activeFilterSummary
+                  : "Inga filter aktiva — visar alla spelare för säsongen"}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={resetFilters}
+              disabled={!filtersDirty}
+            >
+              <RotateCcw className="mr-2 h-3.5 w-3.5" />
+              Återställ filter
+            </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -145,32 +161,49 @@ function PlayersPage() {
                     id="player-search"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="t.ex. Berndtsson eller Grästorps"
-                    className="pl-8"
+                    placeholder="Alla spelare — börja skriv för att söka"
+                    className="pl-8 pr-8"
                   />
+                  {query ? (
+                    <button
+                      type="button"
+                      aria-label="Rensa sökning"
+                      onClick={() => setQuery("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  ) : null}
                 </div>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {(
-                [
-                  ["all", "Alla"],
-                  ["F", "Forwards"],
-                  ["D", "Backar"],
-                  ["G", "Målvakter"],
-                ] as Array<[PosFilter, string]>
-              ).map(([key, label]) => (
-                <Button
-                  key={key}
-                  size="sm"
-                  variant={pos === key ? "default" : "outline"}
-                  onClick={() => setPos(key)}
-                >
-                  {label}
-                </Button>
-              ))}
-              <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-                <span>Sortera:</span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Position:
+                </span>
+                {(
+                  [
+                    ["all", "Alla"],
+                    ["F", "Forwards"],
+                    ["D", "Backar"],
+                    ["G", "Målvakter"],
+                  ] as Array<[PosFilter, string]>
+                ).map(([key, label]) => (
+                  <Button
+                    key={key}
+                    size="sm"
+                    variant={pos === key ? "default" : "outline"}
+                    onClick={() => setPos(key)}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+              <div className="ml-auto flex flex-wrap items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Sortera:
+                </span>
                 {(
                   [
                     ["points", "P"],
