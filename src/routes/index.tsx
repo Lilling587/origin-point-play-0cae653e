@@ -24,13 +24,16 @@ import {
   Check,
   Info,
   Loader2,
+  LogOut,
   RefreshCw,
   Scale,
+  Settings,
   Star,
   Users,
   X,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { supabase } from "@/integrations/supabase/client";
 
 import {
   DEFAULT_FAVORITE_TEAM,
@@ -207,6 +210,7 @@ function Dashboard() {
   }, [todaysMatchupQuery.data?.match?.date]);
 
   const [favorite, setFavorite] = useState<string>(DEFAULT_FAVORITE_TEAM);
+  const [user, setUser] = useState<{ email?: string } | null>(null);
   useEffect(() => {
     setFavorite(getFavoriteTeam());
     const onChange = () => setFavorite(getFavoriteTeam());
@@ -214,6 +218,25 @@ function Dashboard() {
     return () =>
       window.removeEventListener("producerStats:favorite-changed", onChange);
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted) setUser(data.session?.user ?? null);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (mounted) setUser(session?.user ?? null);
+    });
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  };
 
   const home = search.home || favorite || DEFAULT_FAVORITE_TEAM;
   const away = search.away;
@@ -467,9 +490,29 @@ function Dashboard() {
                 <span className="hidden sm:inline">HockeyEttan stats</span>
               </Link>
             </Button>
-            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-              <Link to="/notifications">Logga in</Link>
-            </Button>
+            {user ? (
+              <>
+                <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+                  <Link to="/admin/logos">
+                    <Settings className="mr-2 h-4 w-4 shrink-0" />
+                    Admin
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="mr-2 h-4 w-4 shrink-0" />
+                  Logga ut
+                </Button>
+              </>
+            ) : (
+              <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+                <Link to="/auth">Logga in</Link>
+              </Button>
+            )}
             <ThemeToggle className="w-full sm:w-auto" />
           </div>
         </div>
