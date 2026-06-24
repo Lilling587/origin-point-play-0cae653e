@@ -91,10 +91,8 @@ function PlayersPage() {
     });
     const key = sort;
     const get = (p: LeaguePlayer): number => {
-      if (key === "gp") return p.gamesPlayed ?? -1;
       if (key === "goals") return p.goals ?? -1;
       if (key === "assists") return p.assists ?? -1;
-      if (key === "pim") return p.pim ?? -1;
       return p.points ?? -1;
     };
     return matched.slice().sort((a, b) => get(b) - get(a));
@@ -110,8 +108,6 @@ function PlayersPage() {
     points: "poäng",
     goals: "mål",
     assists: "assist",
-    gp: "matcher",
-    pim: "PIM",
   };
 
   const filtersDirty =
@@ -246,8 +242,6 @@ function PlayersPage() {
                     ["points", "P"],
                     ["goals", "G"],
                     ["assists", "A"],
-                    ["gp", "GP"],
-                    ["pim", "PIM"],
                   ] as Array<[SortKey, string]>
                 ).map(([key, label]) => (
                   <Button
