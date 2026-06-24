@@ -400,6 +400,20 @@ function Dashboard() {
         </div>
       </header>
 
+      {/* Mobile-only sticky tab strip: keeps Briefing/Recap reachable while scrolling */}
+      <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:hidden">
+        <div className="mx-auto max-w-6xl px-4 py-2">
+          <TabsList className="w-full">
+            <TabsTrigger value="briefing" className="flex-1">
+              Briefing
+            </TabsTrigger>
+            <TabsTrigger value="recap" className="flex-1">
+              Recap
+            </TabsTrigger>
+          </TabsList>
+        </div>
+      </div>
+
       <main className="mx-auto max-w-6xl touch-pan-y px-6 py-8 space-y-6">
         <PendingSeasonsBanner
           pending={pendingQuery.data?.pending ?? []}
