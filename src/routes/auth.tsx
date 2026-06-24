@@ -27,7 +27,7 @@ function AuthPage() {
   useEffect(() => {
     let cancelled = false;
     supabase.auth.getSession().then(({ data }) => {
-      if (!cancelled && data.session?.user) navigate({ to: "/notifications", replace: true });
+      if (!cancelled && data.session?.user) navigate({ to: "/admin/logos", replace: true });
     });
     return () => {
       cancelled = true;
@@ -42,7 +42,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin + "/notifications" },
+          options: { emailRedirectTo: window.location.origin + "/admin/logos" },
         });
         if (error) throw error;
         toast.success("Account created");
@@ -53,7 +53,7 @@ function AuthPage() {
         });
         if (error) throw error;
       }
-      navigate({ to: "/notifications", replace: true });
+      navigate({ to: "/admin/logos", replace: true });
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
