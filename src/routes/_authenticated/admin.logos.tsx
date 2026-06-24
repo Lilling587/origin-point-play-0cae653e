@@ -387,6 +387,7 @@ function Section({
                 </Button>
               </div>
               <div className="flex gap-1">
+                <RowUploadButton team={row.team} onUploaded={onSave} />
                 <Button
                   size="icon"
                   variant="outline"
@@ -414,6 +415,56 @@ function Section({
         })}
       </CardContent>
     </Card>
+  );
+}
+
+function RowUploadButton({
+  team,
+  onUploaded,
+}: {
+  team: string;
+  onUploaded: (team: string, url: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  const handleFile = async (file: File) => {
+    setBusy(true);
+    try {
+      const { uploadTeamLogo } = await import("@/lib/team-logo-upload");
+      const url = await uploadTeamLogo(team, file);
+      onUploaded(team, url);
+      toast.success(`Logga uppladdad för ${team}`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) void handleFile(file);
+          e.target.value = "";
+        }}
+      />
+      <Button
+        size="icon"
+        variant="outline"
+        title="Ladda upp egen logga"
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+      >
+        <Upload className={`h-4 w-4 ${busy ? "animate-pulse" : ""}`} />
+      </Button>
+    </>
   );
 }
 
