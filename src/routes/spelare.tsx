@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, RotateCcw, Search, Users, X } from "lucide-react";
 
 import { listSeasons, getLeaguePlayers } from "@/lib/stats.functions";
@@ -14,12 +14,6 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { TeamLogo } from "@/components/team-logo";
 import { translateError } from "@/lib/error-messages";
 
-const seasonsQO = queryOptions({
-  queryKey: ["seasons"],
-  queryFn: () => listSeasons(),
-  staleTime: 24 * 60 * 60 * 1000,
-});
-
 export const Route = createFileRoute("/spelare")({
   head: () => ({
     meta: [
@@ -31,11 +25,23 @@ export const Route = createFileRoute("/spelare")({
       },
     ],
   }),
-  loader: async ({ context }) => {
-    const seasons = await context.queryClient.ensureQueryData(seasonsQO);
-    return { defaultSeason: seasons.default.label };
-  },
   component: PlayersPage,
+  errorComponent: ({ error, reset }) => (
+    <div className="mx-auto max-w-md px-6 py-16 text-center">
+      <h1 className="text-lg font-semibold">Sidan kunde inte laddas</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        {translateError(error)}
+      </p>
+      <Button className="mt-4" onClick={() => reset()}>
+        Försök igen
+      </Button>
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="mx-auto max-w-md px-6 py-16 text-center text-sm text-muted-foreground">
+      Inget hittades.
+    </div>
+  ),
 });
 
 type SortKey = "points" | "goals" | "assists" | "gp" | "pim";
@@ -50,7 +56,6 @@ function matchPosition(filter: PosFilter, pos: string): boolean {
 }
 
 function PlayersPage() {
-  const { defaultSeason } = Route.useLoaderData();
   const fetchSeasons = useServerFn(listSeasons);
   const fetchPlayers = useServerFn(getLeaguePlayers);
 
@@ -60,7 +65,8 @@ function PlayersPage() {
     staleTime: 24 * 60 * 60 * 1000,
   });
 
-  const [season, setSeason] = useState<string>(defaultSeason);
+  const defaultSeason = seasonsQuery.data?.default.label ?? "";
+  const [season, setSeason] = useState<string>("");
   const activeSeason = season || defaultSeason;
   const [query, setQuery] = useState("");
   const [pos, setPos] = useState<PosFilter>("all");
