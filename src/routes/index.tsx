@@ -211,6 +211,7 @@ function Dashboard() {
   }, [todaysMatchupQuery.data?.match?.date]);
 
   const [favorite, setFavorite] = useState<string>(DEFAULT_FAVORITE_TEAM);
+  const [user, setUser] = useState<{ email?: string } | null>(null);
   useEffect(() => {
     setFavorite(getFavoriteTeam());
     const onChange = () => setFavorite(getFavoriteTeam());
@@ -218,6 +219,25 @@ function Dashboard() {
     return () =>
       window.removeEventListener("producerStats:favorite-changed", onChange);
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted) setUser(data.session?.user ?? null);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (mounted) setUser(session?.user ?? null);
+    });
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  };
 
   const home = search.home || favorite || DEFAULT_FAVORITE_TEAM;
   const away = search.away;
