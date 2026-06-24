@@ -439,7 +439,7 @@ function Dashboard() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <TabsList className="w-full sm:w-auto">
+            <TabsList className="hidden sm:flex w-full sm:w-auto">
               <TabsTrigger value="briefing" className="flex-1 sm:flex-initial">
                 <span className="sm:hidden">Briefing</span>
                 <span className="hidden sm:inline">Matchbriefing</span>
