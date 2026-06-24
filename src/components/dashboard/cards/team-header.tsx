@@ -1,0 +1,35 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import type { TeamData } from "@/lib/dashboard-utils";
+
+export function TeamHeader({ team, side }: { team: TeamData; side: string }) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <Badge variant="secondary">{side}</Badge>
+          <span className="text-xs text-muted-foreground">
+            {team.gamesPlayed != null ? `${team.gamesPlayed} GP` : "—"}
+          </span>
+        </div>
+        <CardTitle className="mt-2 text-xl">{team.name}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-baseline gap-4">
+          <div>
+            <div className="text-2xl font-semibold">
+              {team.position != null ? `#${team.position}` : "—"}
+            </div>
+            <div className="text-xs text-muted-foreground">Placering</div>
+          </div>
+          <div>
+            <div className="text-2xl font-semibold">
+              {team.points != null ? team.points : "—"}
+            </div>
+            <div className="text-xs text-muted-foreground">Poäng</div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
