@@ -27,6 +27,7 @@ import {
   RefreshCw,
   Scale,
   Star,
+  Users,
   X,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
