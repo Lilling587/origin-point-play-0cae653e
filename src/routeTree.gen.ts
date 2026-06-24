@@ -17,6 +17,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as IndexIndexRouteImport } from './routes/index.index'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedAdminLogosRouteImport } from './routes/_authenticated/admin.logos'
 import { Route as ApiPublicHooksPregameEmailsRouteImport } from './routes/api/public/hooks/pregame-emails'
 import { Route as ApiPublicHooksPostgameEmailsRouteImport } from './routes/api/public/hooks/postgame-emails'
 
@@ -60,6 +61,11 @@ const AuthenticatedNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminLogosRoute = AuthenticatedAdminLogosRouteImport.update({
+  id: '/admin/logos',
+  path: '/admin/logos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiPublicHooksPregameEmailsRoute =
   ApiPublicHooksPregameEmailsRouteImport.update({
     id: '/api/public/hooks/pregame-emails',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/spelare': typeof SpelareRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/index/': typeof IndexIndexRoute
+  '/admin/logos': typeof AuthenticatedAdminLogosRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
   '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
 }
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/spelare': typeof SpelareRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/index': typeof IndexIndexRoute
+  '/admin/logos': typeof AuthenticatedAdminLogosRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
   '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
 }
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/spelare': typeof SpelareRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/index/': typeof IndexIndexRoute
+  '/_authenticated/admin/logos': typeof AuthenticatedAdminLogosRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
   '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
 }
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/spelare'
     | '/notifications'
     | '/index/'
+    | '/admin/logos'
     | '/api/public/hooks/postgame-emails'
     | '/api/public/hooks/pregame-emails'
   fileRoutesByTo: FileRoutesByTo
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/spelare'
     | '/notifications'
     | '/index'
+    | '/admin/logos'
     | '/api/public/hooks/postgame-emails'
     | '/api/public/hooks/pregame-emails'
   id:
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/spelare'
     | '/_authenticated/notifications'
     | '/index/'
+    | '/_authenticated/admin/logos'
     | '/api/public/hooks/postgame-emails'
     | '/api/public/hooks/pregame-emails'
   fileRoutesById: FileRoutesById
@@ -215,6 +227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/logos': {
+      id: '/_authenticated/admin/logos'
+      path: '/admin/logos'
+      fullPath: '/admin/logos'
+      preLoaderRoute: typeof AuthenticatedAdminLogosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/hooks/pregame-emails': {
       id: '/api/public/hooks/pregame-emails'
       path: '/api/public/hooks/pregame-emails'
@@ -234,10 +253,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedAdminLogosRoute: typeof AuthenticatedAdminLogosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedAdminLogosRoute: AuthenticatedAdminLogosRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

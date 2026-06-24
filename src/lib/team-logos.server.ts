@@ -126,3 +126,76 @@ export async function ensureLogoForTeam(team: string): Promise<string | null> {
   }
   return url;
 }
+
+// ---------- Admin helpers ----------
+
+import type { TeamLogoStatus } from "./team-logos.functions";
+
+export async function listAllTeamLogoStatus(): Promise<TeamLogoStatus[]> {
+  const supabase = publicClient();
+  const [{ data: rows, error }, leagueTeams] = await Promise.all([
+    supabase
+      .from("team_logos")
+      .select("team_name, logo_url, status, source, fetched_at"),
+    (async () => {
+      const { parseTeamsFromStandings } = await import("./stats.server");
+      const { getMergedSeasons } = await import("./seasons.server");
+      const seasons = await getMergedSeasons();
+      const season =
+        seasons[0] ??
+        (await import("./seasons.config")).DEFAULT_SEASON;
+      return parseTeamsFromStandings("", season);
+    })().catch(() => [] as string[]),
+  ]);
+  if (error) throw error;
+
+  const byTeam = new Map<string, TeamLogoStatus>();
+  for (const r of rows ?? []) {
+    byTeam.set(r.team_name, {
+      team: r.team_name,
+      logoUrl: r.logo_url,
+      status: (r.status as TeamLogoStatus["status"]) ?? "unknown",
+      source: r.source,
+      fetchedAt: r.fetched_at,
+    });
+  }
+  for (const team of leagueTeams) {
+    if (!byTeam.has(team)) {
+      byTeam.set(team, {
+        team,
+        logoUrl: null,
+        status: "unknown",
+        source: null,
+        fetchedAt: null,
+      });
+    }
+  }
+  return Array.from(byTeam.values()).sort((a, b) =>
+    a.team.localeCompare(b.team, "sv"),
+  );
+}
+
+export async function upsertTeamLogoOverride(team: string, url: string) {
+  const { supabaseAdmin } = await import(
+    "@/integrations/supabase/client.server"
+  );
+  const { error } = await supabaseAdmin.from("team_logos").upsert({
+    team_name: team,
+    logo_url: url,
+    status: "ok",
+    source: "manual",
+    fetched_at: new Date().toISOString(),
+  });
+  if (error) throw error;
+}
+
+export async function deleteTeamLogoRow(team: string) {
+  const { supabaseAdmin } = await import(
+    "@/integrations/supabase/client.server"
+  );
+  const { error } = await supabaseAdmin
+    .from("team_logos")
+    .delete()
+    .eq("team_name", team);
+  if (error) throw error;
+}
