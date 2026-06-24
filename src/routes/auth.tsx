@@ -1,11 +1,16 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+
+const authSearchSchema = z.object({
+  message: z.string().optional(),
+});
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -14,6 +19,7 @@ export const Route = createFileRoute("/auth")({
       { name: "robots", content: "noindex" },
     ],
   }),
+  validateSearch: authSearchSchema,
   component: AuthPage,
 });
 
@@ -21,10 +27,18 @@ type Mode = "signin" | "signup" | "forgot";
 
 function AuthPage() {
   const navigate = useNavigate();
+  const search = useSearch({ from: "/auth" });
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (search.message === "password-reset") {
+      toast.success("Password reset successfully. Sign in with your new password.");
+      navigate({ to: "/auth", search: {}, replace: true });
+    }
+  }, [search.message, navigate]);
 
   useEffect(() => {
     let cancelled = false;
