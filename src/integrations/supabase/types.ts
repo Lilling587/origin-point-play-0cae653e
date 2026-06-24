@@ -167,6 +167,30 @@ export type Database = {
         }
         Relationships: []
       }
+      team_logos: {
+        Row: {
+          fetched_at: string
+          logo_url: string | null
+          source: string | null
+          status: string
+          team_name: string
+        }
+        Insert: {
+          fetched_at?: string
+          logo_url?: string | null
+          source?: string | null
+          status?: string
+          team_name: string
+        }
+        Update: {
+          fetched_at?: string
+          logo_url?: string | null
+          source?: string | null
+          status?: string
+          team_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
