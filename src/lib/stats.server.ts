@@ -2031,3 +2031,100 @@ export async function fetchLeagueOverview(season: Season): Promise<LeagueOvervie
     bestDefenses,
   };
 }
+
+// ---------- League-wide players (for /spelare search page) ----------
+
+export type LeaguePlayerRow = {
+  team: string;
+  name: string;
+  position: string;
+  gamesPlayed: number | null;
+  goals: number | null;
+  assists: number | null;
+  points: number | null;
+  pim: number | null;
+};
+
+export async function fetchAllLeaguePlayers(
+  season: Season,
+): Promise<LeaguePlayerRow[]> {
+  const urls = buildUrls(season.competitionId);
+  const res = await fetch(urls.scoring, {
+    headers: { "user-agent": "Mozilla/5.0", "cache-control": "no-cache" },
+  });
+  if (!res.ok) throw new Error(`HTTPError ${res.status} ${urls.scoring}`);
+  const html = await res.text();
+
+  const anchorRe = /<a\s+id="([^"]+)">\s*<\/a>/g;
+  const anchors: Array<{ name: string; index: number }> = [];
+  let am: RegExpExecArray | null;
+  while ((am = anchorRe.exec(html)) !== null) {
+    anchors.push({ name: am[1], index: am.index });
+  }
+
+  const out: LeaguePlayerRow[] = [];
+  for (let i = 0; i < anchors.length; i++) {
+    const team = anchors[i].name;
+    const start = anchors[i].index;
+    const end = i + 1 < anchors.length ? anchors[i + 1].index : html.length;
+    let section = html.slice(start, end);
+
+    // Skater table: stop before "Goalkeeping Statistics" subtable.
+    const gkIdx = section.search(/Goalkeeping Statistics/i);
+    const skaterSection = gkIdx === -1 ? section : section.slice(0, gkIdx);
+    const gkSection = gkIdx === -1 ? "" : section.slice(gkIdx);
+
+    const rowRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
+    let rowMatch: RegExpExecArray | null;
+    // Skaters: [rank, no, name, pos, GP, G, A, TP, PIM, ...]
+    while ((rowMatch = rowRe.exec(skaterSection)) !== null) {
+      const cells = extractTdCells(rowMatch[1]);
+      if (cells.length < 9) continue;
+      const rank = Number(cells[0]);
+      if (!Number.isFinite(rank)) continue;
+      const name = cells[2];
+      if (!name) continue;
+      const pos = (cells[3] || "").trim() || "F";
+      const gp = Number(cells[4]);
+      const g = Number(cells[5]);
+      const a = Number(cells[6]);
+      const p = Number(cells[7]);
+      const pim = Number(cells[8]);
+      out.push({
+        team,
+        name,
+        position: pos,
+        gamesPlayed: Number.isFinite(gp) ? gp : null,
+        goals: Number.isFinite(g) ? g : null,
+        assists: Number.isFinite(a) ? a : null,
+        points: Number.isFinite(p) ? p : null,
+        pim: Number.isFinite(pim) ? pim : null,
+      });
+    }
+
+    // Goalies: cells [Rk, No, Name, GPT, GKD, GPI, MIP, GA, SVS, SOG, SVS%, GAA, SO, W, L]
+    if (gkSection) {
+      const gkRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
+      let gm: RegExpExecArray | null;
+      while ((gm = gkRe.exec(gkSection)) !== null) {
+        const cells = extractTdCells(gm[1]);
+        if (cells.length < 15) continue;
+        const name = cells[2];
+        if (!name) continue;
+        const gp = Number(cells[5]);
+        if (!Number.isFinite(gp) || gp === 0) continue;
+        out.push({
+          team,
+          name,
+          position: "G",
+          gamesPlayed: gp,
+          goals: null,
+          assists: null,
+          points: null,
+          pim: null,
+        });
+      }
+    }
+  }
+  return out;
+}
