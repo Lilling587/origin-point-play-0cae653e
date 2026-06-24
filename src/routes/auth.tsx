@@ -8,9 +8,19 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
+const ALLOWED_NEXT = new Set(["/notifications", "/admin/logos"]);
+const DEFAULT_NEXT = "/notifications";
+
 const authSearchSchema = z.object({
   message: z.string().optional(),
+  next: z.string().optional(),
 });
+
+function safeNext(next: string | undefined): "/notifications" | "/admin/logos" {
+  return next && ALLOWED_NEXT.has(next)
+    ? (next as "/notifications" | "/admin/logos")
+    : DEFAULT_NEXT;
+}
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -33,22 +43,25 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const next = safeNext(search.next);
+  const isAdminFlow = next === "/admin/logos";
+
   useEffect(() => {
     if (search.message === "password-reset") {
       toast.success("Password reset successfully. Sign in with your new password.");
-      navigate({ to: "/auth", search: {}, replace: true });
+      navigate({ to: "/auth", search: { next: search.next }, replace: true });
     }
-  }, [search.message, navigate]);
+  }, [search.message, search.next, navigate]);
 
   useEffect(() => {
     let cancelled = false;
     supabase.auth.getSession().then(({ data }) => {
-      if (!cancelled && data.session?.user) navigate({ to: "/admin/logos", replace: true });
+      if (!cancelled && data.session?.user) navigate({ to: next, replace: true });
     });
     return () => {
       cancelled = true;
     };
-  }, [navigate]);
+  }, [navigate, next]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,11 +71,11 @@ function AuthPage() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin + "/admin/logos" },
+          options: { emailRedirectTo: window.location.origin + next },
         });
         if (error) throw error;
         toast.success("Account created");
-        navigate({ to: "/admin/logos", replace: true });
+        navigate({ to: next, replace: true });
       } else if (mode === "forgot") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: window.location.origin + "/reset-password",
@@ -76,7 +89,7 @@ function AuthPage() {
           password,
         });
         if (error) throw error;
-        navigate({ to: "/admin/logos", replace: true });
+        navigate({ to: next, replace: true });
       }
     } catch (err) {
       toast.error((err as Error).message);
@@ -86,7 +99,15 @@ function AuthPage() {
   };
 
   const title =
-    mode === "signin" ? "Sign in" : mode === "signup" ? "Create account" : "Reset password";
+    mode === "signin"
+      ? isAdminFlow
+        ? "Admin sign in"
+        : "Logga in för notiser"
+      : mode === "signup"
+        ? isAdminFlow
+          ? "Create admin account"
+          : "Skapa konto för notiser"
+        : "Reset password";
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">

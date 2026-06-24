@@ -493,6 +493,12 @@ function Dashboard() {
             {user ? (
               <>
                 <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+                  <Link to="/notifications">
+                    <Star className="mr-2 h-4 w-4 shrink-0" />
+                    Notiser
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                   <Link to="/admin/logos">
                     <Settings className="mr-2 h-4 w-4 shrink-0" />
                     Admin
@@ -509,9 +515,21 @@ function Dashboard() {
                 </Button>
               </>
             ) : (
-              <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-                <Link to="/auth">Logga in</Link>
-              </Button>
+              <>
+                <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+                  <Link to="/auth">Logga in</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-xs text-muted-foreground sm:w-auto"
+                >
+                  <Link to="/auth" search={{ next: "/admin/logos" }}>
+                    Admin
+                  </Link>
+                </Button>
+              </>
             )}
             <ThemeToggle className="w-full sm:w-auto" />
           </div>
