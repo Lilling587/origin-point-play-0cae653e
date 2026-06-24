@@ -28,7 +28,6 @@ import {
   RefreshCw,
   Scale,
   Settings,
-  Shield,
   Star,
   Users,
   X,
