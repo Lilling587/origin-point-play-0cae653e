@@ -1,11 +1,16 @@
 import { createFileRoute, useNavigate, Link, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+
+const authSearchSchema = z.object({
+  message: z.string().optional(),
+});
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -14,6 +19,7 @@ export const Route = createFileRoute("/auth")({
       { name: "robots", content: "noindex" },
     ],
   }),
+  validateSearch: authSearchSchema,
   component: AuthPage,
 });
 
