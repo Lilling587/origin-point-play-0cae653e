@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { ArrowLeft, RefreshCw, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { ArrowLeft, RefreshCw, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 import {
   clearTeamLogoCache,
@@ -124,6 +125,12 @@ function LogoAdminPage() {
           <p className="text-sm text-muted-foreground">Laddar…</p>
         ) : (
           <>
+            <BulkUpload
+              teams={rows.map((r) => r.team)}
+              onUploaded={(team, url) =>
+                saveMutation.mutate({ team, url })
+              }
+            />
             <Section
               title={`Saknar logga (${missing.length})`}
               rows={missing}
@@ -159,6 +166,150 @@ function LogoAdminPage() {
     </div>
   );
 }
+
+function BulkUpload({
+  teams,
+  onUploaded,
+}: {
+  teams: string[];
+  onUploaded: (team: string, url: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [unmatched, setUnmatched] = useState<File[]>([]);
+  const [pickTeam, setPickTeam] = useState<Record<string, string>>({});
+
+  const handleFiles = async (files: FileList | File[]) => {
+    const { matchTeamByFilename, uploadTeamLogo } = await import(
+      "@/lib/team-logo-upload"
+    );
+    setBusy(true);
+    const left: File[] = [];
+    let ok = 0;
+    for (const file of Array.from(files)) {
+      const match = matchTeamByFilename(file.name, teams);
+      if (!match) {
+        left.push(file);
+        continue;
+      }
+      try {
+        const url = await uploadTeamLogo(match, file);
+        onUploaded(match, url);
+        ok += 1;
+      } catch (e) {
+        toast.error(`Misslyckades med ${file.name}: ${(e as Error).message}`);
+      }
+    }
+    setBusy(false);
+    setUnmatched((prev) => [...prev, ...left]);
+    if (ok > 0) toast.success(`Laddade upp ${ok} logga${ok === 1 ? "" : "r"}`);
+  };
+
+  const assignUnmatched = async (file: File) => {
+    const team = pickTeam[file.name];
+    if (!team) return;
+    const { uploadTeamLogo } = await import("@/lib/team-logo-upload");
+    try {
+      const url = await uploadTeamLogo(team, file);
+      onUploaded(team, url);
+      setUnmatched((prev) => prev.filter((f) => f !== file));
+      setPickTeam((p) => {
+        const { [file.name]: _omit, ...rest } = p;
+        return rest;
+      });
+      toast.success(`Sparad logga för ${team}`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Massuppladdning</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) {
+              void handleFiles(e.dataTransfer.files);
+            }
+          }}
+          className="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-border px-6 py-8 text-center"
+        >
+          <Upload className="h-6 w-6 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
+            Släpp filer här eller välj filer. Filnamn som matchar ett lagnamn
+            (t.ex. <code>kallinge.png</code>) tilldelas automatiskt.
+          </p>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) {
+                void handleFiles(e.target.files);
+                e.target.value = "";
+              }
+            }}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => inputRef.current?.click()}
+            disabled={busy}
+          >
+            {busy ? "Laddar upp…" : "Välj filer"}
+          </Button>
+        </div>
+
+        {unmatched.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">
+              Kunde inte matcha automatiskt — välj lag:
+            </p>
+            {unmatched.map((file) => (
+              <div
+                key={file.name}
+                className="flex flex-wrap items-center gap-2 rounded-md border border-border px-3 py-2"
+              >
+                <span className="flex-1 truncate text-sm">{file.name}</span>
+                <select
+                  className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+                  value={pickTeam[file.name] ?? ""}
+                  onChange={(e) =>
+                    setPickTeam((p) => ({ ...p, [file.name]: e.target.value }))
+                  }
+                >
+                  <option value="">Välj lag…</option>
+                  {teams.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  size="sm"
+                  disabled={!pickTeam[file.name]}
+                  onClick={() => void assignUnmatched(file)}
+                >
+                  Spara
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 
 function Section({
   title,
@@ -236,6 +387,7 @@ function Section({
                 </Button>
               </div>
               <div className="flex gap-1">
+                <RowUploadButton team={row.team} onUploaded={onSave} />
                 <Button
                   size="icon"
                   variant="outline"
@@ -263,6 +415,56 @@ function Section({
         })}
       </CardContent>
     </Card>
+  );
+}
+
+function RowUploadButton({
+  team,
+  onUploaded,
+}: {
+  team: string;
+  onUploaded: (team: string, url: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  const handleFile = async (file: File) => {
+    setBusy(true);
+    try {
+      const { uploadTeamLogo } = await import("@/lib/team-logo-upload");
+      const url = await uploadTeamLogo(team, file);
+      onUploaded(team, url);
+      toast.success(`Logga uppladdad för ${team}`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) void handleFile(file);
+          e.target.value = "";
+        }}
+      />
+      <Button
+        size="icon"
+        variant="outline"
+        title="Ladda upp egen logga"
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+      >
+        <Upload className={`h-4 w-4 ${busy ? "animate-pulse" : ""}`} />
+      </Button>
+    </>
   );
 }
 
