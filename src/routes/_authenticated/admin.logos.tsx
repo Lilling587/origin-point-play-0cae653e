@@ -42,10 +42,26 @@ function LogoAdminPage() {
   const refetchOne = useServerFn(ensureTeamLogo);
   const saveOverride = useServerFn(setTeamLogoOverride);
   const clearOne = useServerFn(clearTeamLogoCache);
+  const fetchIsAdmin = useServerFn(checkIsAdmin);
+  const navigate = useNavigate();
+
+  const adminQuery = useQuery({
+    queryKey: ["is-admin"],
+    queryFn: () => fetchIsAdmin(),
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (adminQuery.isError || (adminQuery.data && !adminQuery.data.isAdmin)) {
+      toast.error("Du har inte behörighet att se admin-sidan.");
+      navigate({ to: "/", replace: true });
+    }
+  }, [adminQuery.isError, adminQuery.data, navigate]);
 
   const statusQuery = useQuery({
     queryKey: ["team-logos-admin"],
     queryFn: () => fetchStatus(),
+    enabled: adminQuery.data?.isAdmin === true,
   });
 
   const invalidate = () => {
