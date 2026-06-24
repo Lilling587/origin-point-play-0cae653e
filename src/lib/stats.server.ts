@@ -1366,7 +1366,7 @@ export async function findMatchupOnDate(
 
 // ---------- Historical depth helpers ----------
 
-type ScheduleGame = {
+export type ScheduleGame = {
   id: string | null;
   date: string;
   homeTeam: string;
@@ -1374,13 +1374,10 @@ type ScheduleGame = {
   homeGoals: number | null;
   awayGoals: number | null;
   periodCount: number;
-  // Per-period [home, away] goal pairs, in order (P1, P2, P3, then any OT
-  // periods appended). Populated once here so every consumer — venue form,
-  // period-goals totals, last-five, etc. — can derive what it needs without
-  // re-fetching or re-parsing the schedule page itself.
   periods: Array<[number, number]>;
   played: boolean;
 };
+
 
 // Parse every row from a season's schedule page into structured game records.
 // Includes both played and unplayed games; played games carry a numeric score
