@@ -438,7 +438,7 @@ function Dashboard() {
               HockeyEttan Södra · matchstatistik för kommentatorer
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
             <TabsList className="hidden sm:flex w-full sm:w-auto">
               <TabsTrigger value="briefing" className="flex-1 sm:flex-initial">
                 <span className="sm:hidden">Briefing</span>
@@ -449,23 +449,23 @@ function Dashboard() {
                 <span className="hidden sm:inline">Postgame recap</span>
               </TabsTrigger>
             </TabsList>
-            <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-initial">
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
               <Link to="/schema">
                 <CalendarDays className="mr-2 h-4 w-4 shrink-0" />
                 Spelschema
               </Link>
             </Button>
-            <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-initial">
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
               <Link to="/compare">
                 <Scale className="mr-2 h-4 w-4 shrink-0" />
                 <span className="sm:hidden">HockeyEttan stats</span>
                 <span className="hidden sm:inline">HockeyEttan stats</span>
               </Link>
             </Button>
-            <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-initial">
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
               <Link to="/notifications">Logga in</Link>
             </Button>
-            <ThemeToggle className="shrink-0" />
+            <ThemeToggle className="w-full sm:w-auto" />
           </div>
         </div>
       </header>
