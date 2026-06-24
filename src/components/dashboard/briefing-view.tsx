@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ImageDown, Loader2, RefreshCw } from "lucide-react";
+import { ImageDown, Loader2, Printer, RefreshCw } from "lucide-react";
 import type { Briefing } from "@/lib/stats.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -80,14 +80,36 @@ export function BriefingView({
     }
   };
 
+  const handlePrint = () => {
+    if (typeof window !== "undefined") window.print();
+  };
+
   return (
     <div className="space-y-6" id="briefing-capture">
+      <div className="print-only mb-2 border-b border-black pb-2">
+        <h1 className="text-lg font-bold">
+          {data.home.name} vs {data.away.name}
+        </h1>
+        <p className="text-xs">
+          Producent-briefing · utskriven {new Date().toLocaleString("sv-SE")}
+        </p>
+      </div>
+
       <div className="flex items-center justify-between" data-export-hide="true">
         <div className="text-xs text-muted-foreground">
           {cached ? "Cached" : "Fresh"} · fetched{" "}
           {new Date(fetchedAt).toLocaleString("sv-SE")}
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrint}
+            title="Skriv ut briefingen (A4)"
+          >
+            <Printer className="mr-2 h-4 w-4" />
+            Skriv ut
+          </Button>
           <Button
             variant="outline"
             size="sm"
