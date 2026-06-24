@@ -44,7 +44,7 @@ export const Route = createFileRoute("/spelare")({
   ),
 });
 
-type SortKey = "points" | "goals" | "assists" | "gp" | "pim";
+type SortKey = "points" | "goals" | "assists";
 type PosFilter = "all" | "F" | "D" | "G";
 
 function matchPosition(filter: PosFilter, pos: string): boolean {
