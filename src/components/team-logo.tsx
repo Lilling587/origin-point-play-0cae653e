@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { TEAM_LOGO_OVERRIDES } from "@/lib/team-logos";
+import { TEAM_LOGO_OVERRIDES, TEAM_CODE_OVERRIDES } from "@/lib/team-logos";
 
 type Size = "xs" | "sm" | "md" | "lg";
 
