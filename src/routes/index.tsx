@@ -545,7 +545,7 @@ function Dashboard() {
               fetchedAt={briefing.fetchedAt}
               cached={briefing.cached}
               refreshing={briefingMut.isPending}
-              refreshError={briefingMut.isError ? (briefingMut.error as Error).message : null}
+              refreshError={briefingMut.isError ? translateError(briefingMut.error) : null}
               onRefresh={() =>
                 briefingMut.mutate(
                   { home, away: selectedAway, force: true },
