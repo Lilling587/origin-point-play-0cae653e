@@ -294,7 +294,7 @@ function Dashboard() {
         vars,
         season: activeSeason,
       });
-      setError(e.message);
+      setError(translateError(e));
     },
   });
 
