@@ -333,6 +333,11 @@ function Dashboard() {
         vars,
         season: activeSeason,
       });
+      reportError("dashboard.briefingMutation", e, {
+        vars,
+        season: activeSeason,
+        cause: String((e as Error & { cause?: unknown }).cause ?? ""),
+      });
       setError(translateError(e));
     },
   });
