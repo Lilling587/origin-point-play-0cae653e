@@ -1,9 +1,11 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient, queryOptions } from "@tanstack/react-query";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
+import { Skeleton } from "@/components/ui/skeleton";
+import { reportError } from "@/lib/error-reporter";
 
 import {
   listTeams,
@@ -73,8 +75,17 @@ const teamsQueryOptions = (season: string) =>
     staleTime: 60 * 60 * 1000,
   });
 
+const pendingQueryOptions = queryOptions({
+  queryKey: ["season-detections"],
+  queryFn: () => listPendingSeasons(),
+  staleTime: 5 * 60 * 1000,
+});
+
 function RouteError({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
+  useEffect(() => {
+    reportError("dashboard.RouteError", error, { boundary: "/" });
+  }, [error]);
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="flex items-center gap-3 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -124,6 +135,8 @@ export const Route = createFileRoute("/")({
     if (defaultSeason) {
       defaultTeams = await context.queryClient.ensureQueryData(teamsQueryOptions(defaultSeason));
     }
+    // Preload non-critical dashboard queries so initial render skips spinner state.
+    void context.queryClient.prefetchQuery(pendingQueryOptions);
     return { seasons, defaultSeason, defaultTeams };
   },
   errorComponent: RouteError,
@@ -319,6 +332,11 @@ function Dashboard() {
         cause: (e as Error & { cause?: unknown }).cause,
         vars,
         season: activeSeason,
+      });
+      reportError("dashboard.briefingMutation", e, {
+        vars,
+        season: activeSeason,
+        cause: String((e as Error & { cause?: unknown }).cause ?? ""),
       });
       setError(translateError(e));
     },
@@ -710,11 +728,13 @@ function Dashboard() {
 
         <TabsContent value="recap" className="mt-0">
           {canLoad ? (
-            <PostgameRecapCard
-              home={home}
-              away={selectedAway}
-              onBackToBriefing={() => setActiveTab("briefing")}
-            />
+            <Suspense fallback={<Skeleton className="h-48 w-full" />}>
+              <PostgameRecapCard
+                home={home}
+                away={selectedAway}
+                onBackToBriefing={() => setActiveTab("briefing")}
+              />
+            </Suspense>
           ) : null}
         </TabsContent>
       </main>
