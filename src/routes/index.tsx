@@ -75,8 +75,17 @@ const teamsQueryOptions = (season: string) =>
     staleTime: 60 * 60 * 1000,
   });
 
+const pendingQueryOptions = queryOptions({
+  queryKey: ["season-detections"],
+  queryFn: () => listPendingSeasons(),
+  staleTime: 5 * 60 * 1000,
+});
+
 function RouteError({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
+  useEffect(() => {
+    reportError("dashboard.RouteError", error, { boundary: "/" });
+  }, [error]);
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="flex items-center gap-3 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
