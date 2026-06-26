@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, Loader2, RefreshCw } from "lucide-react";
 import {
   getLastMeetingRecap,
@@ -20,7 +20,7 @@ export function PostgameRecapCard({
   away: string;
   onBackToBriefing: () => void;
 }) {
-  const query = useQuery(lastMeetingOptions(home, away));
+  const query = useSuspenseQuery(lastMeetingOptions(home, away));
   const queryClient = useQueryClient();
   const [forcing, setForcing] = useState(false);
   const [autoRefreshedAt, setAutoRefreshedAt] = useState<string | null>(null);
