@@ -30,7 +30,7 @@ export const logError = createServerFn({ method: "POST" })
           level: data.level ?? "error",
           message: data.message.slice(0, 4000),
           stack: data.stack ?? null,
-          context: data.context ?? null,
+          context: (data.context ?? null) as never,
           route: data.route ?? null,
           user_agent: data.userAgent ?? null,
           user_id: data.userId ?? null,
