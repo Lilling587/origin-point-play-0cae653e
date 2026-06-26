@@ -728,11 +728,13 @@ function Dashboard() {
 
         <TabsContent value="recap" className="mt-0">
           {canLoad ? (
-            <PostgameRecapCard
-              home={home}
-              away={selectedAway}
-              onBackToBriefing={() => setActiveTab("briefing")}
-            />
+            <Suspense fallback={<Skeleton className="h-48 w-full" />}>
+              <PostgameRecapCard
+                home={home}
+                away={selectedAway}
+                onBackToBriefing={() => setActiveTab("briefing")}
+              />
+            </Suspense>
           ) : null}
         </TabsContent>
       </main>
