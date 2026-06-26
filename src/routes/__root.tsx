@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { reportError } from "../lib/error-reporter";
 import { installReloadDiagnostics } from "../lib/reload-diagnostics";
 import { Toaster } from "../components/ui/sonner";
 import { ThemeProvider, themeBootScript } from "../components/theme-provider";
