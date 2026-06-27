@@ -1,5 +1,16 @@
 import { useState } from "react";
-import { ImageDown, Loader2, Printer, RefreshCw } from "lucide-react";
+import { Check, ClipboardCopy, FileText, ImageDown, Loader2, Printer, RefreshCw } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  briefingToMarkdown,
+  briefingToTvText,
+  copyToClipboard,
+} from "@/lib/briefing-export";
 import type { Briefing } from "@/lib/stats.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
