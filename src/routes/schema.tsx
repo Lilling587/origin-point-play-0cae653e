@@ -138,153 +138,153 @@ function SchemaPage() {
   const upcomingCount = filtered.length - playedCount;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-6 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight sm:text-2xl">
-              <CalendarDays className="h-5 w-5" />
-              Spelschema
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              HockeyEttan Södra · alla matcher för säsongen
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link to="/">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Tillbaka
-              </Link>
-            </Button>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-6xl px-6 py-8 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Filter</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SeasonPicker
-                value={activeSeason}
-                onChange={setSeason}
-                seasons={(seasonsQuery.data?.seasons ?? []).map((s) => s.label)}
-                loading={seasonsQuery.isLoading}
-              />
-              <SearchableTeamPicker
-                label="Filtrera lag (valfritt)"
-                value={teamFilter}
-                onChange={setTeamFilter}
-                teams={teamOptions}
-                loading={scheduleQuery.isLoading}
-              />
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border">
+          <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight sm:text-2xl">
+                <CalendarDays className="h-5 w-5" />
+                Spelschema
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                HockeyEttan Södra · alla matcher för säsongen
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button
-                size="sm"
-                variant={showPlayed ? "default" : "outline"}
-                onClick={() => setShowPlayed((v) => !v)}
-              >
-                Spelade
+              <Button asChild variant="outline" size="sm">
+                <Link to="/">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Tillbaka
+                </Link>
               </Button>
-              <Button
-                size="sm"
-                variant={showUpcoming ? "default" : "outline"}
-                onClick={() => setShowUpcoming((v) => !v)}
-              >
-                Kommande
-              </Button>
-              {teamFilter ? (
+              <ThemeToggle />
+            </div>
+          </div>
+        </header>
+
+        <main className="mx-auto max-w-6xl px-6 py-8 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Filter</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <SeasonPicker
+                  value={activeSeason}
+                  onChange={setSeason}
+                  seasons={(seasonsQuery.data?.seasons ?? []).map((s) => s.label)}
+                  loading={seasonsQuery.isLoading}
+                />
+                <SearchableTeamPicker
+                  label="Filtrera lag (valfritt)"
+                  value={teamFilter}
+                  onChange={setTeamFilter}
+                  teams={teamOptions}
+                  loading={scheduleQuery.isLoading}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   size="sm"
-                  variant="ghost"
-                  onClick={() => setTeamFilter("")}
+                  variant={showPlayed ? "default" : "outline"}
+                  onClick={() => setShowPlayed((v) => !v)}
                 >
-                  Rensa lagfilter
+                  Spelade
                 </Button>
-              ) : null}
-              <div className="ml-auto text-xs text-muted-foreground">
-                {playedCount} spelade · {upcomingCount} kommande
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {scheduleQuery.isLoading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Laddar spelschema…
-          </div>
-        ) : scheduleQuery.isError ? (
-          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {translateError(scheduleQuery.error)}
-          </div>
-        ) : grouped.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Inga matcher matchar dina filter.
-          </p>
-        ) : (
-          grouped.map(([month, games]) => (
-            <Card key={month}>
-              <CardHeader>
-                <CardTitle className="text-base capitalize">{month}</CardTitle>
-              </CardHeader>
-              <CardContent className="divide-y divide-border">
-                {games.map((g, i) => (
-                  <div
-                    key={`${g.date}-${g.homeTeam}-${g.awayTeam}-${i}`}
-                    className="grid grid-cols-[5rem_minmax(0,1fr)_auto] items-center gap-3 py-2 text-sm sm:grid-cols-[8rem_minmax(0,1fr)_auto]"
+                <Button
+                  size="sm"
+                  variant={showUpcoming ? "default" : "outline"}
+                  onClick={() => setShowUpcoming((v) => !v)}
+                >
+                  Kommande
+                </Button>
+                {teamFilter ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setTeamFilter("")}
                   >
-                    <div className="min-w-0 shrink-0 text-xs text-muted-foreground sm:text-sm">
-                      {formatSwedishDate(g.date)}
-                    </div>
-                    <div className="flex min-w-0 items-center gap-2">
-                      <TeamLogo team={g.homeTeam} size="sm" />
-                      <span
-                        className={`truncate ${teamFilter === g.homeTeam ? "font-semibold" : ""}`}
-                      >
-                        {g.homeTeam}
-                      </span>
-                      <span className="mx-1 shrink-0 text-muted-foreground">vs</span>
-                      <TeamLogo team={g.awayTeam} size="sm" />
-                      <span
-                        className={`truncate ${teamFilter === g.awayTeam ? "font-semibold" : ""}`}
-                      >
-                        {g.awayTeam}
-                      </span>
-                    </div>
-                    <div className="shrink-0 justify-self-end">
-                      {g.played ? (
-                        g.id ? (
-                          <a
-                            href={`https://stats.swehockey.se/Game/Events/${g.id}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="font-mono text-primary hover:underline"
-                          >
-                            {g.homeGoals}–{g.awayGoals} ↗
-                          </a>
-                        ) : (
-                          <span className="font-mono">
-                            {g.homeGoals}–{g.awayGoals}
-                          </span>
-                        )
-                      ) : (
-                        <Badge variant="outline">Kommande</Badge>
-                      )}
-                    </div>
-                  </div>
+                    Rensa lagfilter
+                  </Button>
+                ) : null}
+                <div className="ml-auto text-xs text-muted-foreground">
+                  {playedCount} spelade · {upcomingCount} kommande
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-                ))}
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </main>
-    </div>
+          {scheduleQuery.isLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Laddar spelschema…
+            </div>
+          ) : scheduleQuery.isError ? (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {translateError(scheduleQuery.error)}
+            </div>
+          ) : grouped.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Inga matcher matchar dina filter.
+            </p>
+          ) : (
+            grouped.map(([month, games]) => (
+              <Card key={month}>
+                <CardHeader>
+                  <CardTitle className="text-base capitalize">{month}</CardTitle>
+                </CardHeader>
+                <CardContent className="divide-y divide-border">
+                  {games.map((g, i) => (
+                    <div
+                      key={`${g.date}-${g.homeTeam}-${g.awayTeam}-${i}`}
+                      className="grid grid-cols-[5rem_minmax(0,1fr)_auto] items-center gap-3 py-2 text-sm sm:grid-cols-[8rem_minmax(0,1fr)_auto]"
+                    >
+                      <div className="min-w-0 shrink-0 text-xs text-muted-foreground sm:text-sm">
+                        {formatSwedishDate(g.date)}
+                      </div>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <TeamLogo team={g.homeTeam} size="sm" />
+                        <TeamName
+                          name={g.homeTeam}
+                          highlighted={teamFilter === g.homeTeam}
+                        />
+                        <span className="mx-1 shrink-0 text-muted-foreground">vs</span>
+                        <TeamLogo team={g.awayTeam} size="sm" />
+                        <TeamName
+                          name={g.awayTeam}
+                          highlighted={teamFilter === g.awayTeam}
+                        />
+                      </div>
+                      <div className="shrink-0 justify-self-end">
+                        {g.played ? (
+                          g.id ? (
+                            <a
+                              href={`https://stats.swehockey.se/Game/Events/${g.id}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="font-mono text-primary hover:underline"
+                            >
+                              {g.homeGoals}–{g.awayGoals} ↗
+                            </a>
+                          ) : (
+                            <span className="font-mono">
+                              {g.homeGoals}–{g.awayGoals}
+                            </span>
+                          )
+                        ) : (
+                          <Badge variant="outline">Kommande</Badge>
+                        )}
+                      </div>
+                    </div>
+
+                  ))}
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </main>
+      </div>
+    </TooltipProvider>
   );
 }
