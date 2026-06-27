@@ -20,6 +20,7 @@ import { SearchableTeamPicker } from "@/components/dashboard/searchable-team-pic
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TeamLogo } from "@/components/team-logo";
 import { translateError } from "@/lib/error-messages";
+import { shortTeamName } from "@/lib/team-short-names";
 
 const seasonsQO = queryOptions({
   queryKey: ["seasons"],
