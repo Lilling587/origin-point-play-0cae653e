@@ -85,8 +85,23 @@ function PlayersPage() {
     const matched = all.filter((p) => {
       if (!matchPosition(pos, p.position)) return false;
       if (!q) return true;
+
+      const raw = p.name.toLowerCase();
+
+      // Player names from swehockey.se are stored as "Surname, Firstname".
+      // Build a normalized "firstname surname" version so searching either
+      // order works: "hampus", "hampus berndtsson", and "berndtsson" all
+      // find "Berndtsson, Hampus".
+      const parts = p.name.split(",");
+      const normalized =
+        parts.length === 2
+          ? `${parts[1].trim()} ${parts[0].trim()}`.toLowerCase()
+          : raw;
+
       return (
-        p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q)
+        raw.includes(q) ||
+        normalized.includes(q) ||
+        p.team.toLowerCase().includes(q)
       );
     });
     const key = sort;
@@ -125,7 +140,6 @@ function PlayersPage() {
     setPos("all");
     setSort("points");
   };
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -194,7 +208,7 @@ function PlayersPage() {
                     id="player-search"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Alla spelare — börja skriv för att söka"
+                    placeholder="Förnamn, efternamn eller lag"
                     className="pl-8 pr-8"
                   />
                   {query ? (
