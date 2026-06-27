@@ -70,21 +70,32 @@ export function useTeamLogos(): LogoMap {
 
   // Lazy-fetch unknown teams; result is merged into the cached map.
   useEffect(() => {
-    // expose imperative resolver on the client for ad-hoc fetches
+    const inflight = new Map<string, Promise<void>>();
+    const tried = new Set<string>();
     (window as unknown as { __resolveTeamLogo?: (t: string) => Promise<void> })
       .__resolveTeamLogo = async (team: string) => {
       const current = queryClient.getQueryData<LogoMap>(QUERY_KEY) ?? {};
       if (current[team]) return;
-      try {
-        const { url } = await ensureTeamLogo({ data: { team } });
-        if (!url) return;
-        queryClient.setQueryData<LogoMap>(QUERY_KEY, (prev) => ({
-          ...(prev ?? {}),
-          [team]: url,
-        }));
-      } catch {
-        // swallow — fallback avatar will render
-      }
+      if (tried.has(team)) return;
+      const existing = inflight.get(team);
+      if (existing) return existing;
+      const p = (async () => {
+        try {
+          const { url } = await ensureTeamLogo({ data: { team } });
+          tried.add(team);
+          if (!url) return;
+          queryClient.setQueryData<LogoMap>(QUERY_KEY, (prev) => ({
+            ...(prev ?? {}),
+            [team]: url,
+          }));
+        } catch {
+          tried.add(team);
+        } finally {
+          inflight.delete(team);
+        }
+      })();
+      inflight.set(team, p);
+      return p;
     };
   }, [queryClient]);
 
