@@ -29,18 +29,14 @@ export const Route = createFileRoute("/spelare")({
   errorComponent: ({ error, reset }) => (
     <div className="mx-auto max-w-md px-6 py-16 text-center">
       <h1 className="text-lg font-semibold">Sidan kunde inte laddas</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        {translateError(error)}
-      </p>
+      <p className="mt-2 text-sm text-muted-foreground">{translateError(error)}</p>
       <Button className="mt-4" onClick={() => reset()}>
         Försök igen
       </Button>
     </div>
   ),
   notFoundComponent: () => (
-    <div className="mx-auto max-w-md px-6 py-16 text-center text-sm text-muted-foreground">
-      Inget hittades.
-    </div>
+    <div className="mx-auto max-w-md px-6 py-16 text-center text-sm text-muted-foreground">Inget hittades.</div>
   ),
 });
 
@@ -103,11 +99,9 @@ function PlayersPage() {
       // regardless of which order the user types the name.
       const combined = `${raw} ${normalized}`;
       const words = q.split(/\s+/).filter(Boolean);
+      console.log("query:", q, "words:", words, "combined example:", `${playersQuery.data?.players?.[0]?.name ?? ""}`);
 
-      return (
-        words.every((w) => combined.includes(w)) ||
-        p.team.toLowerCase().includes(q)
-      );
+      return words.every((w) => combined.includes(w)) || p.team.toLowerCase().includes(q);
     });
     const key = sort;
     const get = (p: LeaguePlayer): number => {
@@ -130,8 +124,7 @@ function PlayersPage() {
     assists: "assist",
   };
 
-  const filtersDirty =
-    query.trim().length > 0 || pos !== "all" || sort !== "points";
+  const filtersDirty = query.trim().length > 0 || pos !== "all" || sort !== "points";
   const activeFilterSummary = [
     query.trim() ? `Sök: "${query.trim()}"` : null,
     pos !== "all" ? `Position: ${posLabel[pos]}` : null,
@@ -155,9 +148,7 @@ function PlayersPage() {
               <Users className="h-5 w-5" />
               Spelare
             </h1>
-            <p className="text-sm text-muted-foreground">
-              HockeyEttan Södra · sök bland alla spelare i ligan
-            </p>
+            <p className="text-sm text-muted-foreground">HockeyEttan Södra · sök bland alla spelare i ligan</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button asChild variant="outline" size="sm">
@@ -177,17 +168,10 @@ function PlayersPage() {
             <div className="min-w-0">
               <CardTitle className="text-base">Filter</CardTitle>
               <p className="mt-1 text-xs text-muted-foreground">
-                {filtersDirty
-                  ? activeFilterSummary
-                  : "Inga filter aktiva — visar alla spelare för säsongen"}
+                {filtersDirty ? activeFilterSummary : "Inga filter aktiva — visar alla spelare för säsongen"}
               </p>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={resetFilters}
-              disabled={!filtersDirty}
-            >
+            <Button size="sm" variant="outline" onClick={resetFilters} disabled={!filtersDirty}>
               <RotateCcw className="mr-2 h-3.5 w-3.5" />
               Återställ filter
             </Button>
@@ -201,10 +185,7 @@ function PlayersPage() {
                 loading={seasonsQuery.isLoading}
               />
               <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="player-search"
-                  className="text-sm font-medium leading-none"
-                >
+                <label htmlFor="player-search" className="text-sm font-medium leading-none">
                   Sök spelare eller lag
                 </label>
                 <div className="relative">
@@ -231,9 +212,7 @@ function PlayersPage() {
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Position:
-                </span>
+                <span className="text-xs font-medium text-muted-foreground">Position:</span>
                 {(
                   [
                     ["all", "Alla"],
@@ -242,20 +221,13 @@ function PlayersPage() {
                     ["G", "Målvakter"],
                   ] as Array<[PosFilter, string]>
                 ).map(([key, label]) => (
-                  <Button
-                    key={key}
-                    size="sm"
-                    variant={pos === key ? "default" : "outline"}
-                    onClick={() => setPos(key)}
-                  >
+                  <Button key={key} size="sm" variant={pos === key ? "default" : "outline"} onClick={() => setPos(key)}>
                     {label}
                   </Button>
                 ))}
               </div>
               <div className="ml-auto flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Sortera:
-                </span>
+                <span className="text-xs font-medium text-muted-foreground">Sortera:</span>
                 {(
                   [
                     ["points", "P"],
@@ -263,12 +235,7 @@ function PlayersPage() {
                     ["assists", "A"],
                   ] as Array<[SortKey, string]>
                 ).map(([key, label]) => (
-                  <Button
-                    key={key}
-                    size="sm"
-                    variant={sort === key ? "default" : "ghost"}
-                    onClick={() => setSort(key)}
-                  >
+                  <Button key={key} size="sm" variant={sort === key ? "default" : "ghost"} onClick={() => setSort(key)}>
                     {label}
                   </Button>
                 ))}
@@ -287,15 +254,11 @@ function PlayersPage() {
             {translateError(playersQuery.error)}
           </div>
         ) : filtered.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Inga spelare matchar din sökning.
-          </p>
+          <p className="text-sm text-muted-foreground">Inga spelare matchar din sökning.</p>
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">
-                {filtered.length} spelare
-              </CardTitle>
+              <CardTitle className="text-base">{filtered.length} spelare</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {/* Desktop table */}
@@ -317,9 +280,7 @@ function PlayersPage() {
                   <tbody className="divide-y divide-border">
                     {filtered.slice(0, 500).map((p, i) => (
                       <tr key={`${p.team}-${p.name}-${i}`}>
-                        <td className="px-4 py-2 text-muted-foreground">
-                          {i + 1}
-                        </td>
+                        <td className="px-4 py-2 text-muted-foreground">{i + 1}</td>
                         <td className="px-4 py-2 font-medium">{p.name}</td>
                         <td className="px-4 py-2">
                           <span className="flex items-center gap-2">
@@ -327,24 +288,12 @@ function PlayersPage() {
                             {p.team}
                           </span>
                         </td>
-                        <td className="px-2 py-2 text-muted-foreground">
-                          {p.position}
-                        </td>
-                        <td className="px-2 py-2 text-right tabular-nums">
-                          {p.gamesPlayed ?? "—"}
-                        </td>
-                        <td className="px-2 py-2 text-right tabular-nums">
-                          {p.goals ?? "—"}
-                        </td>
-                        <td className="px-2 py-2 text-right tabular-nums">
-                          {p.assists ?? "—"}
-                        </td>
-                        <td className="px-2 py-2 text-right font-semibold tabular-nums">
-                          {p.points ?? "—"}
-                        </td>
-                        <td className="px-2 py-2 text-right tabular-nums">
-                          {p.pim ?? "—"}
-                        </td>
+                        <td className="px-2 py-2 text-muted-foreground">{p.position}</td>
+                        <td className="px-2 py-2 text-right tabular-nums">{p.gamesPlayed ?? "—"}</td>
+                        <td className="px-2 py-2 text-right tabular-nums">{p.goals ?? "—"}</td>
+                        <td className="px-2 py-2 text-right tabular-nums">{p.assists ?? "—"}</td>
+                        <td className="px-2 py-2 text-right font-semibold tabular-nums">{p.points ?? "—"}</td>
+                        <td className="px-2 py-2 text-right tabular-nums">{p.pim ?? "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -354,26 +303,17 @@ function PlayersPage() {
               {/* Mobile cards */}
               <ul className="divide-y divide-border sm:hidden">
                 {filtered.slice(0, 200).map((p, i) => (
-                  <li
-                    key={`m-${p.team}-${p.name}-${i}`}
-                    className="flex items-center gap-3 px-4 py-3"
-                  >
-                    <span className="w-6 shrink-0 text-xs text-muted-foreground">
-                      {i + 1}
-                    </span>
+                  <li key={`m-${p.team}-${p.name}-${i}`} className="flex items-center gap-3 px-4 py-3">
+                    <span className="w-6 shrink-0 text-xs text-muted-foreground">{i + 1}</span>
                     <TeamLogo team={p.team} size="md" />
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium">
-                        {p.name}
-                      </div>
+                      <div className="truncate text-sm font-medium">{p.name}</div>
                       <div className="truncate text-xs text-muted-foreground">
                         {p.team} · {p.position}
                       </div>
                     </div>
                     <div className="text-right text-xs tabular-nums">
-                      <div className="text-sm font-semibold">
-                        {p.points ?? "—"} P
-                      </div>
+                      <div className="text-sm font-semibold">{p.points ?? "—"} P</div>
                       <div className="text-muted-foreground">
                         {p.goals ?? 0}+{p.assists ?? 0} · {p.gamesPlayed ?? "—"} GP
                       </div>
