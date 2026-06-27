@@ -90,17 +90,22 @@ function PlayersPage() {
 
       // Player names from swehockey.se are stored as "Surname, Firstname".
       // Build a normalized "firstname surname" version so searching either
-      // order works: "hampus", "hampus berndtsson", and "berndtsson" all
-      // find "Berndtsson, Hampus".
+      // order works. Use replace(/\s+/g, " ") to handle any non-breaking
+      // spaces that may come from HTML scraping.
       const parts = p.name.split(",");
       const normalized =
         parts.length === 2
-          ? `${parts[1].trim()} ${parts[0].trim()}`.toLowerCase()
+          ? `${parts[1].replace(/\s+/g, " ").trim()} ${parts[0].replace(/\s+/g, " ").trim()}`.toLowerCase()
           : raw;
 
+      // Combine both forms into one string and require every word in the
+      // query to appear somewhere in it. This makes "karl umegård" work
+      // regardless of which order the user types the name.
+      const combined = `${raw} ${normalized}`;
+      const words = q.split(/\s+/).filter(Boolean);
+
       return (
-        raw.includes(q) ||
-        normalized.includes(q) ||
+        words.every((w) => combined.includes(w)) ||
         p.team.toLowerCase().includes(q)
       );
     });
