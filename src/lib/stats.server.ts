@@ -18,10 +18,8 @@ async function generateJson<T extends z.ZodTypeAny>(
       `\n\nRespond with ONLY valid JSON matching this requirement, no prose, no markdown code fences.`,
   });
   let raw = text.trim();
-  // Strip ```json fences if present
   const fence = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fence) raw = fence[1].trim();
-  // Find first {...} or [...] block
   const start = raw.search(/[\[{]/);
   if (start > 0) raw = raw.slice(start);
   try {
@@ -127,7 +125,6 @@ function extractTeamSection(md: string, teamName: string): string {
     line.includes(`| | ${teamName} | ${teamName} |`),
   );
   if (start === -1) return md.slice(0, 10000);
-
   const end = lines.findIndex(
     (line, index) =>
       index > start && /^\| \| .+ \| .+ \| \[\\\[Top\\\]\]/.test(line),
@@ -158,8 +155,6 @@ function extractH2HRows(scheduleMd: string, home: string, away: string): string 
   return rows.join("\n") || "(no head-to-head rows found in schedule)";
 }
 
-// From the schedule markdown, find the most recent 5 PLAYED games for a team.
-// A played game has a score like "3 - 2" in column 5. Sort by date desc.
 function extractLastFiveRows(scheduleMd: string, teamName: string): string {
   const needle = teamName.toLowerCase();
   const dateRe = /\b(\d{4}-\d{2}-\d{2})\b/;
@@ -168,7 +163,6 @@ function extractLastFiveRows(scheduleMd: string, teamName: string): string {
     .split("\n")
     .filter((l) => l.toLowerCase().includes(needle) && dateRe.test(l) && scoreRe.test(l))
     .map((l) => ({ line: l, date: (l.match(dateRe) as RegExpMatchArray)[1] }))
-    // de-dupe rows with same date+line content
     .filter((v, i, arr) => arr.findIndex((x) => x.line === v.line) === i)
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .slice(0, 5)
@@ -198,7 +192,6 @@ function parseLastFiveGames(scheduleMd: string, teamName: string): Briefing["hom
       const teams = gameCell.split(/\s+-\s+/);
       const score = scoreCell.match(/^(\d+)\s*-\s*(\d+)$/);
       if (teams.length !== 2 || !score) return null;
-
       const [homeTeam, awayTeam] = teams;
       const isHome = homeTeam.toLowerCase() === teamName.toLowerCase();
       const opponent = isHome ? awayTeam : homeTeam;
@@ -211,20 +204,9 @@ function parseLastFiveGames(scheduleMd: string, teamName: string): Briefing["hom
         teamGoals === opponentGoals
           ? "T"
           : teamGoals > opponentGoals
-            ? wentBeyondRegulation
-              ? "OTW"
-              : "W"
-            : wentBeyondRegulation
-              ? "OTL"
-              : "L";
-
-      return {
-        date,
-        opponent,
-        score: `${teamGoals}-${opponentGoals}`,
-        result,
-        isHome,
-      };
+            ? wentBeyondRegulation ? "OTW" : "W"
+            : wentBeyondRegulation ? "OTL" : "L";
+      return { date, opponent, score: `${teamGoals}-${opponentGoals}`, result, isHome };
     })
     .filter((game): game is NonNullable<typeof game> => game !== null)
     .slice(0, 5);
@@ -239,35 +221,28 @@ function parseHeadToHead(
   const a = away.toLowerCase();
   const seen = new Set<string>();
   const out: Briefing["headToHead"] = [];
-
   for (const line of scheduleMd.split("\n")) {
     if (!line.startsWith("|")) continue;
     const date = line.match(/\b(\d{4}-\d{2}-\d{2})\b/)?.[1];
     if (!date) continue;
-
     const cells = line.split("|").slice(1, -1).map(normalizeScheduleText);
     const gameCell =
       cells.find((cell) => cell.includes(" - ") && !/^\d+\s*-\s*\d+$/.test(cell)) ?? "";
     const scoreCell = cells.find((cell) => /^\d+\s*-\s*\d+$/.test(cell)) ?? "";
     const teams = gameCell.split(/\s+-\s+/);
     if (teams.length !== 2) continue;
-
     const [homeTeam, awayTeam] = teams;
     const lh = homeTeam.toLowerCase();
     const la = awayTeam.toLowerCase();
     const isH2H = (lh.includes(h) && la.includes(a)) || (lh.includes(a) && la.includes(h));
     if (!isH2H) continue;
-
     const key = `${date}|${homeTeam}|${awayTeam}`;
     if (seen.has(key)) continue;
     seen.add(key);
-
     const scoreMatch = scoreCell.match(/^(\d+)\s*-\s*(\d+)$/);
     const score = scoreMatch ? `${scoreMatch[1]}-${scoreMatch[2]}` : "";
-
     out.push({ date, homeTeam, awayTeam, score, gameId: null });
   }
-
   return out.sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
@@ -298,62 +273,42 @@ function parseSpecialTeamsStats(
   let section: "pp" | "pk" | null = null;
   let powerPlayPct: number | null = null;
   let penaltyKillPct: number | null = null;
-
   for (const line of specialTeamsMd.split("\n")) {
     if (line.includes("Powerplay Efficiency")) section = "pp";
     if (line.includes("Penalty Killing")) section = "pk";
     if (!line.startsWith("|")) continue;
-
     const cells = line
       .split("|")
       .slice(1, -1)
       .map((cell) => cell.replace(/\*\*/g, "").trim());
     if (cells[1]?.toUpperCase() !== teamCode.toUpperCase()) continue;
-
     const pct = Number(cells[5]?.replace(",", "."));
     if (!Number.isFinite(pct)) continue;
     if (section === "pp") powerPlayPct = pct;
     if (section === "pk") penaltyKillPct = pct;
   }
-
   return { powerPlayPct, penaltyKillPct };
 }
 
-// Fallback: fetch the PP/PK page as raw HTML and parse the rows by matching
-// the `<span title="Full Team Name"><strong>CODE</strong></span>` cell. Used
-// when the Firecrawl-rendered markdown loses the team code (or is stale) and
-// our primary parser returns null for either stat.
 async function fetchSpecialTeamsFromHtml(
   urls: Urls,
-): Promise<
-  Record<string, { powerPlayPct: number | null; penaltyKillPct: number | null }>
-> {
+): Promise<Record<string, { powerPlayPct: number | null; penaltyKillPct: number | null }>> {
   try {
     const res = await fetch(urls.specialTeams, {
       headers: { "user-agent": "Mozilla/5.0", "cache-control": "no-cache" },
     });
     const html = await res.text();
-    const result: Record<
-      string,
-      { powerPlayPct: number | null; penaltyKillPct: number | null }
-    > = {};
-
-    // Split into PP and PK halves on the section headers.
+    const result: Record<string, { powerPlayPct: number | null; penaltyKillPct: number | null }> = {};
     const ppIdx = html.search(/Powerplay Efficiency/i);
     const pkIdx = html.search(/Penalty Killing/i);
     const sections: Array<{ key: "pp" | "pk"; html: string }> = [];
     if (ppIdx !== -1) {
-      sections.push({
-        key: "pp",
-        html: html.slice(ppIdx, pkIdx === -1 ? undefined : pkIdx),
-      });
+      sections.push({ key: "pp", html: html.slice(ppIdx, pkIdx === -1 ? undefined : pkIdx) });
     }
     if (pkIdx !== -1) sections.push({ key: "pk", html: html.slice(pkIdx) });
-
     const rowRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
     const titleRe = /<span\s+title="([^"]+)"[^>]*>\s*<strong>([^<]+)<\/strong>/i;
     const cellRe = /<td[^>]*>([\s\S]*?)<\/td>/gi;
-
     for (const section of sections) {
       let rowMatch: RegExpExecArray | null;
       while ((rowMatch = rowRe.exec(section.html)) !== null) {
@@ -361,25 +316,17 @@ async function fetchSpecialTeamsFromHtml(
         const titleMatch = rowHtml.match(titleRe);
         if (!titleMatch) continue;
         const teamName = titleMatch[1].trim();
-
         const cells: string[] = [];
         let cellMatch: RegExpExecArray | null;
         const cellIter = new RegExp(cellRe);
         while ((cellMatch = cellIter.exec(rowHtml)) !== null) {
           cells.push(
-            cellMatch[1]
-              .replace(/<[^>]+>/g, "")
-              .replace(/&nbsp;|\u00a0/g, " ")
-              .trim(),
+            cellMatch[1].replace(/<[^>]+>/g, "").replace(/&nbsp;|\u00a0/g, " ").trim(),
           );
         }
-        // Cells: [rank, code(span), GP, ADV/TimesShort, GF/GA, PCT, time, avg, ...]
         const pct = Number(cells[5]?.replace(",", "."));
         if (!Number.isFinite(pct)) continue;
-        const entry = result[teamName] ?? {
-          powerPlayPct: null,
-          penaltyKillPct: null,
-        };
+        const entry = result[teamName] ?? { powerPlayPct: null, penaltyKillPct: null };
         if (section.key === "pp") entry.powerPlayPct = pct;
         if (section.key === "pk") entry.penaltyKillPct = pct;
         result[teamName] = entry;
@@ -410,23 +357,15 @@ function extractTdCells(rowHtml: string): string[] {
   return cells;
 }
 
-// Fallback: parse the standings page HTML to get position / GP / points per
-// team. The page contains multiple historical standings tables; we keep only
-// the FIRST occurrence per team name (current season is rendered first).
 async function fetchStandingsFromHtml(
   urls: Urls,
-): Promise<
-  Record<string, { position: number | null; gamesPlayed: number | null; points: number | null }>
-> {
+): Promise<Record<string, { position: number | null; gamesPlayed: number | null; points: number | null }>> {
   try {
     const res = await fetch(urls.standings, {
       headers: { "user-agent": "Mozilla/5.0", "cache-control": "no-cache" },
     });
     const html = await res.text();
-    const result: Record<
-      string,
-      { position: number | null; gamesPlayed: number | null; points: number | null }
-    > = {};
+    const result: Record<string, { position: number | null; gamesPlayed: number | null; points: number | null }> = {};
     const rowRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
     let rowMatch: RegExpExecArray | null;
     while ((rowMatch = rowRe.exec(html)) !== null) {
@@ -437,7 +376,7 @@ async function fetchStandingsFromHtml(
       const gamesPlayed = Number(cells[2]);
       const points = Number(cells[8]);
       if (!Number.isFinite(position) || !name || !Number.isFinite(gamesPlayed) || !Number.isFinite(points)) continue;
-      if (name in result) continue; // keep first (current season) only
+      if (name in result) continue;
       result[name] = { position, gamesPlayed, points };
     }
     return result;
@@ -447,219 +386,165 @@ async function fetchStandingsFromHtml(
   }
 }
 
-// Fallback: parse the PlayersByTeam page HTML to get the top 5 scorers per
-// team. Each team's table is anchored by `<a id="Team Name"> </a>` followed
-// by a player table where rows are already sorted by points.
-async function fetchTopScorersFromHtml(
-  urls: Urls,
-): Promise<Record<string, Briefing["home"]["topScorers"]>> {
+// ---------------------------------------------------------------------------
+// fetchScoringPageData — single fetch of the PlayersByTeam page that returns
+// top scorers, goalies, AND discipline (PIM) for every team in one pass.
+//
+// Previously fetchTopScorersFromHtml, fetchGoaliesFromHtml, and
+// fetchDisciplineFromHtml each independently fetched urls.scoring, meaning
+// buildBriefing() hit that page up to three times per cold call. This
+// consolidates all three into one HTTP request, parsed once, with each
+// consumer reading from its own result bucket.
+// ---------------------------------------------------------------------------
+
+type ScoringPageData = {
+  topScorers: Record<string, Briefing["home"]["topScorers"]>;
+  goalies: Record<string, Briefing["home"]["goalies"]>;
+  discipline: Record<string, NonNullable<Briefing["home"]["discipline"]>>;
+};
+
+async function fetchScoringPageData(urls: Urls): Promise<ScoringPageData> {
+  const topScorers: Record<string, Briefing["home"]["topScorers"]> = {};
+  const goalies: Record<string, Briefing["home"]["goalies"]> = {};
+  const discipline: Record<string, NonNullable<Briefing["home"]["discipline"]>> = {};
+
   try {
     const res = await fetch(urls.scoring, {
       headers: { "user-agent": "Mozilla/5.0", "cache-control": "no-cache" },
     });
     const html = await res.text();
-    const result: Record<string, Briefing["home"]["topScorers"]> = {};
-    // Split on anchor tags; each chunk after the first belongs to a team.
+
+    // Each team's data lives between anchor tags:
+    // <a id="Team Name"> </a> ... <a id="Next Team"> </a>
     const anchorRe = /<a\s+id="([^"]+)">\s*<\/a>/g;
     const anchors: Array<{ name: string; index: number }> = [];
     let am: RegExpExecArray | null;
     while ((am = anchorRe.exec(html)) !== null) {
       anchors.push({ name: am[1], index: am.index });
     }
+
+    const parseNum = (raw: string): number | null => {
+      if (!raw || raw === "N/A") return null;
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : null;
+    };
+
     for (let i = 0; i < anchors.length; i++) {
+      const teamName = anchors[i].name;
       const start = anchors[i].index;
       const end = i + 1 < anchors.length ? anchors[i + 1].index : html.length;
-      const section = html.slice(start, end);
-      // Only the scoring table (with name + G + A + TP columns); skip if no players.
-      const rowRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
-      const scorers: Briefing["home"]["topScorers"] = [];
+      const fullSection = html.slice(start, end);
+
+      // Split skater section from goalie subtable once, reuse for all three parsers.
+      const gkIdx = fullSection.search(/Goalkeeping Statistics/i);
+      const skaterSection = gkIdx === -1 ? fullSection : fullSection.slice(0, gkIdx);
+      const gkSection = gkIdx === -1 ? "" : fullSection.slice(gkIdx);
+
+      // --- Top scorers (first 5 skaters by points) ---
+      const scorerList: Briefing["home"]["topScorers"] = [];
+      // --- Discipline (PIM totals + top offenders, skaters only) ---
+      let totalPim = 0;
+      let maxGp = 0;
+      const offenders: Array<{ name: string; pim: number; gamesPlayed: number | null }> = [];
+
+      const skaterRowRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
       let rowMatch: RegExpExecArray | null;
-      while ((rowMatch = rowRe.exec(section)) !== null) {
+      // Player row: [rank, no, name, pos, GP, G, A, TP, PIM, ...]
+      while ((rowMatch = skaterRowRe.exec(skaterSection)) !== null) {
         const cells = extractTdCells(rowMatch[1]);
-        // Player row: [rank, no, name, pos, GP, G, A, TP, PIM, ...]
         if (cells.length < 9) continue;
         const rank = Number(cells[0]);
         if (!Number.isFinite(rank)) continue;
         const name = cells[2];
+        if (!name) continue;
         const gp = Number(cells[4]);
         const goals = Number(cells[5]);
         const assists = Number(cells[6]);
         const points = Number(cells[7]);
-        if (!name || !Number.isFinite(points)) continue;
-        scorers.push({
-          name,
-          goals: Number.isFinite(goals) ? goals : null,
-          assists: Number.isFinite(assists) ? assists : null,
-          points,
-          gamesPlayed: Number.isFinite(gp) ? gp : null,
-        });
-        if (scorers.length >= 5) break;
-      }
-      if (scorers.length > 0) result[anchors[i].name] = scorers;
-    }
-    return result;
-  } catch (err) {
-    console.warn("[topScorers] HTML fallback failed:", (err as Error).message);
-    return {};
-  }
-}
-
-// Fallback: parse the PlayersByTeam page HTML to get goalies per team. Each
-// team section contains a "Goalkeeping Statistics" subtable after the skater
-// table. Columns: Rk, No, Name, GPT, GKD, GPI, MIP, GA, SVS, SOG, SVS%, GAA,
-// SO, W, L (15 cells).
-async function fetchGoaliesFromHtml(
-  urls: Urls,
-): Promise<Record<string, Briefing["home"]["goalies"]>> {
-  try {
-    const res = await fetch(urls.scoring, {
-      headers: { "user-agent": "Mozilla/5.0", "cache-control": "no-cache" },
-    });
-    const html = await res.text();
-    const result: Record<string, Briefing["home"]["goalies"]> = {};
-    const anchorRe = /<a\s+id="([^"]+)">\s*<\/a>/g;
-    const anchors: Array<{ name: string; index: number }> = [];
-    let am: RegExpExecArray | null;
-    while ((am = anchorRe.exec(html)) !== null) {
-      anchors.push({ name: am[1], index: am.index });
-    }
-    for (let i = 0; i < anchors.length; i++) {
-      const start = anchors[i].index;
-      const end = i + 1 < anchors.length ? anchors[i + 1].index : html.length;
-      const section = html.slice(start, end);
-      const gkIdx = section.search(/Goalkeeping Statistics/i);
-      if (gkIdx === -1) continue;
-      const gkSection = section.slice(gkIdx);
-      const rowRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
-      const goalies: Briefing["home"]["goalies"] = [];
-      let rowMatch: RegExpExecArray | null;
-      const parseNum = (raw: string): number | null => {
-        if (!raw || raw === "N/A") return null;
-        const n = Number(raw);
-        return Number.isFinite(n) ? n : null;
-      };
-      while ((rowMatch = rowRe.exec(gkSection)) !== null) {
-        const cells = extractTdCells(rowMatch[1]);
-        if (cells.length < 15) continue;
-        const name = cells[2];
-        if (!name) continue;
-        const gp = parseNum(cells[5]);
-        if (gp == null || gp === 0) continue; // skip dressed-but-unused goalies
-        goalies.push({
-          name,
-          gamesPlayed: gp,
-          minutes: cells[6] || null,
-          goalsAgainst: parseNum(cells[7]),
-          saves: parseNum(cells[8]),
-          shotsAgainst: parseNum(cells[9]),
-          savePct: parseNum(cells[10]),
-          gaa: parseNum(cells[11]),
-          shutouts: parseNum(cells[12]),
-          wins: parseNum(cells[13]),
-          losses: parseNum(cells[14]),
-        });
-        if (goalies.length >= 5) break;
-      }
-      if (goalies.length > 0) {
-        // Sort by games played desc so primary starter is first.
-        goalies.sort((a, b) => (b.gamesPlayed ?? 0) - (a.gamesPlayed ?? 0));
-        result[anchors[i].name] = goalies;
-      }
-    }
-    return result;
-  } catch (err) {
-    console.warn("[goalies] HTML fallback failed:", (err as Error).message);
-    return {};
-  }
-}
-
-// Parse season penalty-minutes (PIM) per team and most-penalized players from
-// the same PlayersByTeam HTML used for top scorers / goalies. Each team
-// section's skater table has cells: [rank, no, name, pos, GP, G, A, TP, PIM,...].
-async function fetchDisciplineFromHtml(
-  urls: Urls,
-): Promise<Record<string, NonNullable<Briefing["home"]["discipline"]>>> {
-  try {
-    const res = await fetch(urls.scoring, {
-      headers: { "user-agent": "Mozilla/5.0", "cache-control": "no-cache" },
-    });
-    const html = await res.text();
-    const result: Record<string, NonNullable<Briefing["home"]["discipline"]>> = {};
-    const anchorRe = /<a\s+id="([^"]+)">\s*<\/a>/g;
-    const anchors: Array<{ name: string; index: number }> = [];
-    let am: RegExpExecArray | null;
-    while ((am = anchorRe.exec(html)) !== null) {
-      anchors.push({ name: am[1], index: am.index });
-    }
-    for (let i = 0; i < anchors.length; i++) {
-      const start = anchors[i].index;
-      const end = i + 1 < anchors.length ? anchors[i + 1].index : html.length;
-      let section = html.slice(start, end);
-      // Trim away the goalie subtable so we only sum skater PIM.
-      const gkIdx = section.search(/Goalkeeping Statistics/i);
-      if (gkIdx !== -1) section = section.slice(0, gkIdx);
-
-      const rowRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
-      let rowMatch: RegExpExecArray | null;
-      let totalPim = 0;
-      let maxGp = 0;
-      const offenders: Array<{ name: string; pim: number; gamesPlayed: number | null }> = [];
-      while ((rowMatch = rowRe.exec(section)) !== null) {
-        const cells = extractTdCells(rowMatch[1]);
-        if (cells.length < 9) continue;
-        const rank = Number(cells[0]);
-        if (!Number.isFinite(rank)) continue;
-        const name = cells[2];
-        const gp = Number(cells[4]);
         const pim = Number(cells[8]);
-        if (!name || !Number.isFinite(pim)) continue;
-        totalPim += pim;
-        if (Number.isFinite(gp) && gp > maxGp) maxGp = gp;
-        if (pim > 0) {
-          offenders.push({
+
+        // Top scorers: keep first 5 valid rows
+        if (scorerList.length < 5 && Number.isFinite(points)) {
+          scorerList.push({
             name,
-            pim,
+            goals: Number.isFinite(goals) ? goals : null,
+            assists: Number.isFinite(assists) ? assists : null,
+            points,
             gamesPlayed: Number.isFinite(gp) ? gp : null,
           });
         }
+
+        // Discipline: sum all skaters
+        if (Number.isFinite(pim)) {
+          totalPim += pim;
+          if (Number.isFinite(gp) && gp > maxGp) maxGp = gp;
+          if (pim > 0) {
+            offenders.push({ name, pim, gamesPlayed: Number.isFinite(gp) ? gp : null });
+          }
+        }
       }
+
+      if (scorerList.length > 0) topScorers[teamName] = scorerList;
+
       offenders.sort((a, b) => b.pim - a.pim);
-      result[anchors[i].name] = {
+      discipline[teamName] = {
         totalPim,
         gamesPlayed: maxGp,
         perGame: maxGp > 0 ? totalPim / maxGp : 0,
         topOffenders: offenders.slice(0, 3),
       };
+
+      // --- Goalies ---
+      // Columns: Rk, No, Name, GPT, GKD, GPI, MIP, GA, SVS, SOG, SVS%, GAA, SO, W, L (15 cells)
+      if (gkSection) {
+        const goalieList: Briefing["home"]["goalies"] = [];
+        const gkRowRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
+        let gm: RegExpExecArray | null;
+        while ((gm = gkRowRe.exec(gkSection)) !== null) {
+          const cells = extractTdCells(gm[1]);
+          if (cells.length < 15) continue;
+          const name = cells[2];
+          if (!name) continue;
+          const gp = parseNum(cells[5]);
+          if (gp == null || gp === 0) continue; // skip unused goalies
+          goalieList.push({
+            name,
+            gamesPlayed: gp,
+            minutes: cells[6] || null,
+            goalsAgainst: parseNum(cells[7]),
+            saves: parseNum(cells[8]),
+            shotsAgainst: parseNum(cells[9]),
+            savePct: parseNum(cells[10]),
+            gaa: parseNum(cells[11]),
+            shutouts: parseNum(cells[12]),
+            wins: parseNum(cells[13]),
+            losses: parseNum(cells[14]),
+          });
+          if (goalieList.length >= 5) break;
+        }
+        if (goalieList.length > 0) {
+          goalieList.sort((a, b) => (b.gamesPlayed ?? 0) - (a.gamesPlayed ?? 0));
+          goalies[teamName] = goalieList;
+        }
+      }
     }
-    return result;
   } catch (err) {
-    console.warn("[discipline] HTML parse failed:", (err as Error).message);
-    return {};
+    console.warn("[scoringPage] fetch failed:", (err as Error).message);
   }
+
+  return { topScorers, goalies, discipline };
 }
 
 // ---------------------------------------------------------------------------
-// NOTE ON THIS SECTION (schedule-derived helpers):
+// NOTE ON SCHEDULE-DERIVED HELPERS:
 //
 // fetchLastFiveFromHtml, fetchVenueFormFromHtml, and fetchPeriodGoalsFromHtml
-// used to each independently `fetch(urls.schedule)` and re-parse the raw HTML
-// from scratch. That meant a single buildBriefing() call could fetch the same
-// schedule page 3-4 times (once via Firecrawl markdown, then again here,
-// again in venue form, again in period goals, again in the fallback pass).
-//
-// They've been replaced with pure, synchronous `compute*` functions that
-// operate on the already-fetched, memoized `ScheduleGame[]` from
-// getScheduleGames(season) (see "Historical depth helpers" below). The
-// schedule HTML is now fetched at most once per season per process (cached
-// in `scheduleCache`), and every consumer — buildBriefing, the fallback
-// pass, and the historical endpoints — shares that single fetch.
-//
-// The HTTP-fetching versions are kept below, commented out, for reference /
-// rollback only. They are no longer called anywhere.
+// previously each independently fetched urls.schedule. They've been replaced
+// with pure synchronous compute* functions that operate on the already-fetched
+// memoized ScheduleGame[] from getScheduleGames(season). The schedule HTML is
+// now fetched at most once per season per process (cached in scheduleCache).
 // ---------------------------------------------------------------------------
 
-// Computes the most recent 5 played games per team, derived from already-
-// fetched schedule games (see getScheduleGames). No network call.
 function computeLastFive(
   games: ScheduleGame[],
   teamNames: string[],
@@ -680,28 +565,15 @@ function computeLastFive(
           teamGoals === opponentGoals
             ? "T"
             : teamGoals > opponentGoals
-              ? wentBeyond
-                ? "OTW"
-                : "W"
-              : wentBeyond
-                ? "OTL"
-                : "L";
-        return {
-          date: g.date,
-          opponent,
-          score: `${teamGoals}-${opponentGoals}`,
-          result,
-          isHome,
-        };
+              ? wentBeyond ? "OTW" : "W"
+              : wentBeyond ? "OTL" : "L";
+        return { date: g.date, opponent, score: `${teamGoals}-${opponentGoals}`, result, isHome };
       });
     if (teamGames.length > 0) result[teamName] = teamGames;
   }
   return result;
 }
 
-// Fetch the team's last N played games (per-team), scrape each game's
-// /Game/Events/<id> page, and tally goals + assists for that team's players.
-// Returns the top scorer per team over those games.
 type HotPlayer = NonNullable<Briefing["home"]["hotPlayer"]>;
 async function fetchHotPlayersFromGameLogs(
   urls: Urls,
@@ -713,8 +585,6 @@ async function fetchHotPlayersFromGameLogs(
       headers: { "user-agent": "Mozilla/5.0", "cache-control": "no-cache" },
     });
     const schedHtml = await schedRes.text();
-
-    // Parse schedule rows for played games with a /Game/Events/<id> link.
     type Game = { id: string; date: string; homeTeam: string; awayTeam: string };
     const allGames: Game[] = [];
     const rowRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
@@ -747,8 +617,6 @@ async function fetchHotPlayersFromGameLogs(
         awayTeam: teams[2].trim(),
       });
     }
-
-    // Per-team recent game ids (most recent first).
     const perTeam = new Map<string, { code: string; games: Game[] }>();
     for (const { name, code } of teamLookups) {
       if (!code) continue;
@@ -758,8 +626,6 @@ async function fetchHotPlayersFromGameLogs(
         .slice(0, recentGames);
       if (games.length > 0) perTeam.set(name, { code, games });
     }
-
-    // Dedupe + fetch all needed game pages.
     const gameIds = new Set<string>();
     for (const { games } of perTeam.values()) for (const g of games) gameIds.add(g.id);
     const fetchedPages = new Map<string, string>();
@@ -775,14 +641,11 @@ async function fetchHotPlayersFromGameLogs(
         }
       }),
     );
-
-    // Parse goal rows out of one event page; return [{teamCode, scorer, assists[]}]
     type GoalEntry = { teamCode: string; scorer: string; assists: string[] };
     const parseGoals = (html: string): GoalEntry[] => {
       const goals: GoalEntry[] = [];
       const trRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
       let tr: RegExpExecArray | null;
-      // Player name extraction: "10. Berndtsson, Hampus" -> "Berndtsson, Hampus"
       const namePartRe = /\d+\.\s*([^<(]+?)(?=\s*<|\s*\(|$)/;
       const cleanName = (s: string) =>
         s.replace(/\s+/g, " ").replace(/[,\s]+$/, "").trim();
@@ -791,16 +654,13 @@ async function fetchHotPlayersFromGameLogs(
         if (!/Total goals scored/i.test(row)) continue;
         const cells = row.split(/<\/td>/i);
         if (cells.length < 4) continue;
-        // 3rd td = team code; 4th td = scorer + assists spans.
         const teamCodeMatch = cells[2].replace(/<[^>]+>/g, "").trim();
         if (!/^[A-ZÅÄÖ]{2,4}$/.test(teamCodeMatch)) continue;
         const scorerCell = cells[3];
-        // Scorer is the first "N. Name" before the tooltip span.
         const beforeSpan = scorerCell.split(/<span/i)[0];
         const scorerM = beforeSpan.match(namePartRe);
         if (!scorerM) continue;
         const scorer = cleanName(scorerM[1]);
-        // Assists live in <span><div title="Assists in tournament: N">N. Name</div></span>
         const assists: string[] = [];
         const assistRe = /Assists in tournament[^"]*"[^>]*>([\s\S]*?)<\/div>/gi;
         let am: RegExpExecArray | null;
@@ -813,7 +673,6 @@ async function fetchHotPlayersFromGameLogs(
       }
       return goals;
     };
-
     const result: Record<string, HotPlayer> = {};
     for (const [teamName, { code, games }] of perTeam.entries()) {
       const tally = new Map<string, { goals: number; assists: number }>();
@@ -836,11 +695,7 @@ async function fetchHotPlayersFromGameLogs(
       let top: { name: string; goals: number; assists: number; points: number } | null = null;
       for (const [name, t] of tally.entries()) {
         const points = t.goals + t.assists;
-        if (
-          !top ||
-          points > top.points ||
-          (points === top.points && t.goals > top.goals)
-        ) {
+        if (!top || points > top.points || (points === top.points && t.goals > top.goals)) {
           top = { name, goals: t.goals, assists: t.assists, points };
         }
       }
@@ -877,8 +732,6 @@ function computeStreak(results: ResultLetter[]): VenueForm["home"]["streak"] {
   return { type, count };
 }
 
-// Computes home/away venue-split form (results + streak) for each requested
-// team, derived from already-fetched schedule games. No network call.
 function computeVenueForm(
   games: ScheduleGame[],
   teamNames: string[],
@@ -899,12 +752,8 @@ function computeVenueForm(
         teamGoals === oppGoals
           ? "T"
           : teamGoals > oppGoals
-            ? wentBeyond
-              ? "OTW"
-              : "W"
-            : wentBeyond
-              ? "OTL"
-              : "L";
+            ? wentBeyond ? "OTW" : "W"
+            : wentBeyond ? "OTL" : "L";
       (isHome ? home : away).push(r);
     }
     out[teamName] = {
@@ -917,11 +766,6 @@ function computeVenueForm(
 
 type PeriodGoals = NonNullable<Briefing["home"]["periodGoals"]>;
 
-// Sums goals scored by each team per period across all played games this
-// season, derived from already-fetched schedule games (which now carry the
-// per-period [home, away] pairs — see ScheduleGame.periods). No network call.
-// Values beyond the third period pair are aggregated into OT, matching the
-// previous HTML-fetching implementation's behavior.
 function computePeriodGoals(
   games: ScheduleGame[],
   teamNames: string[],
@@ -949,12 +793,7 @@ function computePeriodGoals(
   return out;
 }
 
-// Parses the roster page HTML-style markdown to extract a map of full team
-// name -> short team code (e.g. "Grästorps IK" -> "GRÄ", "Borås HC" -> "BRS").
-// The roster page contains anchor links like [Team Name](#CODE) at the top.
 async function fetchTeamCodeMap(urls: Urls): Promise<Record<string, string>> {
-  // Use a raw HTML fetch (not firecrawl markdown) because the anchor codes
-  // live in href attributes that Firecrawl strips when converting to markdown.
   try {
     const res = await fetch(urls.roster, { headers: { "user-agent": "Mozilla/5.0" } });
     const html = await res.text();
@@ -974,14 +813,10 @@ async function fetchTeamCodeMap(urls: Urls): Promise<Record<string, string>> {
   }
 }
 
-
 export async function parseTeamsFromStandings(
   _md: string,
   season: Season = DEFAULT_SEASON,
 ): Promise<string[]> {
-  // Parse standings HTML directly — no AI needed. The standings page renders
-  // the current season's table first; fetchStandingsFromHtml keeps only the
-  // first occurrence of each team name, sorted by appearance (i.e. position).
   const urls = buildUrls(season.competitionId);
   const byName = await fetchStandingsFromHtml(urls);
   const teams = Object.entries(byName)
@@ -1014,18 +849,19 @@ export async function buildBriefing(
 ): Promise<Briefing> {
   const urls = buildUrls(season.competitionId);
 
-  // Fetch the schedule ONCE as structured games (memoized per season via
-  // getScheduleGames/scheduleCache), alongside the still-Firecrawl-sourced
-  // pages and the team code map. Previously, venue form, period goals, and
-  // (in the fallback pass) last-five each independently re-fetched and
-  // re-parsed urls.schedule as raw HTML — up to 3-4 schedule fetches per
-  // buildBriefing call. They now all read from this single `scheduleGames`.
-  const [scheduleGames, scheduleMd, specialTeamsMd, codeMap] = await Promise.all([
-    getScheduleGames(season),
-    scrapeMd(urls.schedule),
-    scrapeMd(urls.specialTeams),
-    fetchTeamCodeMap(urls),
-  ]);
+  // Fetch the schedule ONCE (memoized via getScheduleGames/scheduleCache),
+  // Firecrawl pages, team code map, AND the scoring page (which feeds
+  // top scorers, goalies, AND discipline in one HTTP request via
+  // fetchScoringPageData — previously those three fetched urls.scoring
+  // independently, up to three times per buildBriefing call).
+  const [scheduleGames, scheduleMd, specialTeamsMd, codeMap, scoringData] =
+    await Promise.all([
+      getScheduleGames(season),
+      scrapeMd(urls.schedule),
+      scrapeMd(urls.specialTeams),
+      fetchTeamCodeMap(urls),
+      fetchScoringPageData(urls),
+    ]);
 
   const homeCode = codeMap[home];
   const awayCode = codeMap[away];
@@ -1035,6 +871,7 @@ export async function buildBriefing(
   const parsedAwayLast5 = parseLastFiveGames(scheduleMd, away);
   const homeSpecialTeams = parseSpecialTeamsStats(specialTeamsMd, homeCode);
   const awaySpecialTeams = parseSpecialTeamsStats(specialTeamsMd, awayCode);
+
   const emptyTeam = (name: string): Briefing["home"] => ({
     name,
     position: null,
@@ -1050,6 +887,7 @@ export async function buildBriefing(
     hotPlayer: null,
     discipline: null,
   });
+
   const object: Briefing = {
     league: "HockeyEttan Södra",
     home: emptyTeam(home),
@@ -1065,10 +903,7 @@ export async function buildBriefing(
   object.away.powerPlayPct = awaySpecialTeams.powerPlayPct;
   object.away.penaltyKillPct = awaySpecialTeams.penaltyKillPct;
 
-  // Always derive venue-split form from the schedule games (not AI) so
-  // hallucinations can't pollute streak data. Fall back to an empty split if
-  // the team has no games yet so the field is always well-formed, never
-  // undefined/null.
+  // Venue form and period goals from the shared schedule games — no network call.
   const emptyVenueForm = (): VenueForm => ({
     home: { results: [], streak: null },
     away: { results: [], streak: null },
@@ -1077,24 +912,18 @@ export async function buildBriefing(
   object.home.venueForm = venueByName[home] ?? emptyVenueForm();
   object.away.venueForm = venueByName[away] ?? emptyVenueForm();
 
-  // Aggregate season goals scored per period from the schedule games.
   const periodGoalsByName = computePeriodGoals(scheduleGames, [home, away]);
   object.home.periodGoals = periodGoalsByName[home] ?? null;
   object.away.periodGoals = periodGoalsByName[away] ?? null;
 
-  // Goalies are never AI-extracted; always parse from PlayersByTeam HTML.
-  // Discipline (PIM totals + top offenders) parses the same scoring page.
-  const [goaliesByName, disciplineByName] = await Promise.all([
-    fetchGoaliesFromHtml(urls),
-    fetchDisciplineFromHtml(urls),
-  ]);
-  object.home.goalies = goaliesByName[home] ?? [];
-  object.away.goalies = goaliesByName[away] ?? [];
-  object.home.discipline = disciplineByName[home] ?? null;
-  object.away.discipline = disciplineByName[away] ?? null;
+  // Goalies, top scorers (fallback), and discipline all come from the single
+  // fetchScoringPageData call above — urls.scoring fetched exactly once.
+  object.home.goalies = scoringData.goalies[home] ?? [];
+  object.away.goalies = scoringData.goalies[away] ?? [];
+  object.home.discipline = scoringData.discipline[home] ?? null;
+  object.away.discipline = scoringData.discipline[away] ?? null;
 
-  // Hot players: aggregate goals + assists from each team's last 5 played
-  // game event pages. Uses the team's 3-letter code from the standings.
+  // Hot players from individual game event pages.
   const hotPlayerStarted = Date.now();
   const hotByName = await fetchHotPlayersFromGameLogs(urls, [
     { name: home, code: homeCode },
@@ -1106,14 +935,10 @@ export async function buildBriefing(
     `[hotPlayer] done in ${Date.now() - hotPlayerStarted}ms — home=${object.home.hotPlayer?.name ?? "none"} away=${object.away.hotPlayer?.name ?? "none"}`,
   );
 
-  // Fallback: if either team is missing PP/PK, position, points, gamesPlayed,
-  // top scorers, or last-five, re-fetch the source pages directly as HTML
-  // and fill the gaps. The HTML embeds the full team name in places where
-  // the Firecrawl-rendered markdown sometimes drops it, so this is more
-  // robust when the AI extraction or the markdown is incomplete.
-  //
-  // last-five's fallback now reads from the same `scheduleGames` used above
-  // (via computeLastFive) instead of re-fetching urls.schedule again.
+  // Fallback pass: fill any fields still null/empty after the primary parse.
+  // last-five uses computeLastFive (no network); standings and PP/PK hit their
+  // respective pages only when needed; top scorers fall back to scoringData
+  // (already fetched above) before touching the network.
   const ppPkMissing =
     object.home.powerPlayPct == null ||
     object.home.penaltyKillPct == null ||
@@ -1127,8 +952,6 @@ export async function buildBriefing(
   const lastFiveNeeded =
     object.home.lastFive.length === 0 || object.away.lastFive.length === 0;
 
-  // Snapshot which fields were missing BEFORE the fallback runs, so we can
-  // diff against the post-fallback state and report what each source filled.
   type FieldKey =
     | "position"
     | "points"
@@ -1157,20 +980,25 @@ export async function buildBriefing(
     `[fallback] missing before — ${home}: [${[...homeMissing].join(", ") || "none"}]; ${away}: [${[...awayMissing].join(", ") || "none"}]`,
   );
 
+  // Top scorers fallback uses the already-fetched scoringData — no extra fetch.
+  // Only PP/PK and standings need their own pages when missing.
   const fetchStarted = Date.now();
-  const [ppByName, standingsByName, scorersByName, lastFiveByName] = await Promise.all([
-    ppPkMissing ? fetchSpecialTeamsFromHtml(urls) : Promise.resolve({} as Record<string, { powerPlayPct: number | null; penaltyKillPct: number | null }>),
-    standingsNeeded ? fetchStandingsFromHtml(urls) : Promise.resolve({} as Record<string, { position: number | null; gamesPlayed: number | null; points: number | null }>),
-    topScorersNeeded ? fetchTopScorersFromHtml(urls) : Promise.resolve({} as Record<string, Briefing["home"]["topScorers"]>),
-    lastFiveNeeded ? Promise.resolve(computeLastFive(scheduleGames, [home, away])) : Promise.resolve({} as Record<string, Briefing["home"]["lastFive"]>),
+  const [ppByName, standingsByName, lastFiveByName] = await Promise.all([
+    ppPkMissing
+      ? fetchSpecialTeamsFromHtml(urls)
+      : Promise.resolve({} as Record<string, { powerPlayPct: number | null; penaltyKillPct: number | null }>),
+    standingsNeeded
+      ? fetchStandingsFromHtml(urls)
+      : Promise.resolve({} as Record<string, { position: number | null; gamesPlayed: number | null; points: number | null }>),
+    lastFiveNeeded
+      ? Promise.resolve(computeLastFive(scheduleGames, [home, away]))
+      : Promise.resolve({} as Record<string, Briefing["home"]["lastFive"]>),
   ]);
   const fetchMs = Date.now() - fetchStarted;
   console.log(
-    `[fallback] HTML fetches done in ${fetchMs}ms — sources: pp/pk=${Object.keys(ppByName).length} standings=${Object.keys(standingsByName).length} topScorers=${Object.keys(scorersByName).length} lastFive=${Object.keys(lastFiveByName).length}`,
+    `[fallback] fetches done in ${fetchMs}ms — pp/pk=${Object.keys(ppByName).length} standings=${Object.keys(standingsByName).length}`,
   );
 
-  // Per-team metrics: which fields the fallback actually filled, which it
-  // tried-but-failed (still null after fallback), and which were already OK.
   type FilledEntry = { field: FieldKey; source: string };
   const metrics: Record<
     string,
@@ -1182,7 +1010,7 @@ export async function buildBriefing(
     const sourceMatched = {
       ppPk: name in ppByName,
       standings: name in standingsByName,
-      topScorers: name in scorersByName,
+      topScorers: name in scoringData.topScorers,
       lastFive: name in lastFiveByName,
     };
 
@@ -1212,10 +1040,13 @@ export async function buildBriefing(
         filled.push({ field: "gamesPlayed", source: "standings" });
       }
     }
-    const sc = scorersByName[name];
-    if (sc && team.topScorers.length === 0) {
-      team.topScorers = sc;
-      filled.push({ field: "topScorers", source: "topScorers" });
+    // Top scorers fallback: read from already-fetched scoringData — free.
+    if (team.topScorers.length === 0) {
+      const sc = scoringData.topScorers[name];
+      if (sc && sc.length > 0) {
+        team.topScorers = sc;
+        filled.push({ field: "topScorers", source: "scoringData" });
+      }
     }
     const lf = lastFiveByName[name];
     if (lf && team.lastFive.length === 0) {
@@ -1223,10 +1054,8 @@ export async function buildBriefing(
       filled.push({ field: "lastFive", source: "lastFive" });
     }
 
-    // Anything still missing that the fallback was supposed to cover.
     const stillMissing = missingBefore(team);
     const failed = [...wasMissing].filter((f) => stillMissing.has(f));
-
     metrics[name] = { filled, failed, sourceMatched };
     if (filled.length > 0) {
       console.log(`[fallback] FILLED ${name}: ${filled.map((f) => f.field).join(", ")}`);
@@ -1248,12 +1077,7 @@ export async function buildBriefing(
     `[fallback-metrics] ${JSON.stringify({
       matchup: `${home} vs ${away}`,
       fetchMs,
-      sourcesAttempted: {
-        ppPk: ppPkMissing,
-        standings: standingsNeeded,
-        topScorers: topScorersNeeded,
-        lastFive: lastFiveNeeded,
-      },
+      sourcesAttempted: { ppPk: ppPkMissing, standings: standingsNeeded, topScorers: topScorersNeeded, lastFive: lastFiveNeeded },
       missingBefore: { home: [...homeMissing], away: [...awayMissing] },
       filled: { home: filledHome, away: filledAway },
       failed: { home: metrics[home].failed, away: metrics[away].failed },
@@ -1261,7 +1085,7 @@ export async function buildBriefing(
     })}`,
   );
 
-  // Persist per-field events to the database for quality trend queries.
+  // Persist fallback quality events to Supabase.
   const matchupLabel = `${home} vs ${away}`;
   const events: Array<{
     matchup: string;
@@ -1316,8 +1140,6 @@ export async function buildBriefing(
 export type { Briefing };
 export { z };
 
-// Find a scheduled game on a specific date (YYYY-MM-DD) from the schedule HTML.
-// Returns the first matching row; both played and unplayed games are considered.
 export async function findMatchupOnDate(
   season: Season,
   dateISO: string,
@@ -1351,11 +1173,7 @@ export async function findMatchupOnDate(
       if (!matchupCell) continue;
       const teams = matchupCell.match(matchupRe);
       if (!teams) continue;
-      return {
-        date: currentDate,
-        home: teams[1].trim(),
-        away: teams[2].trim(),
-      };
+      return { date: currentDate, home: teams[1].trim(), away: teams[2].trim() };
     }
     return null;
   } catch (err) {
@@ -1378,10 +1196,6 @@ export type ScheduleGame = {
   played: boolean;
 };
 
-
-// Parse every row from a season's schedule page into structured game records.
-// Includes both played and unplayed games; played games carry a numeric score
-// and a /Game/Events/<id> link.
 async function fetchAllScheduleGames(urls: Urls): Promise<ScheduleGame[]> {
   const res = await fetch(urls.schedule, {
     headers: { "user-agent": "Mozilla/5.0", "cache-control": "no-cache" },
@@ -1438,24 +1252,18 @@ async function fetchAllScheduleGames(urls: Urls): Promise<ScheduleGame[]> {
   return games;
 }
 
-// Per-process memoization of schedule scrapes so the three Historical cards
-// (and now buildBriefing's venue form / period goals / last-five-fallback)
-// share work within a request. Keyed by competitionId.
 const scheduleCache = new Map<string, Promise<ScheduleGame[]>>();
 export function getScheduleGames(season: Season): Promise<ScheduleGame[]> {
   const key = season.competitionId;
   const existing = scheduleCache.get(key);
   if (existing) return existing;
   const p = fetchAllScheduleGames(buildUrls(key)).catch((err) => {
-    scheduleCache.delete(key); // allow retry on next call
+    scheduleCache.delete(key);
     throw err;
   });
   scheduleCache.set(key, p);
   return p;
 }
-
-
-
 
 export type AllTimeH2H = {
   totals: { wins: number; ties: number; losses: number; otWins: number; otLosses: number };
@@ -1471,16 +1279,10 @@ export async function computeAllTimeHeadToHead(
 ): Promise<AllTimeH2H> {
   const { getMergedSeasons } = await import("./seasons.server");
   const seasons = await getMergedSeasons();
-  let wins = 0,
-    ties = 0,
-    losses = 0,
-    otWins = 0,
-    otLosses = 0,
-    meetings = 0;
+  let wins = 0, ties = 0, losses = 0, otWins = 0, otLosses = 0, meetings = 0;
   const atHome = { wins: 0, ties: 0, losses: 0 };
   const atAway = { wins: 0, ties: 0, losses: 0 };
   const seasonLabels = new Set<string>();
-
   await Promise.all(
     seasons.map(async (s) => {
       try {
@@ -1499,16 +1301,12 @@ export async function computeAllTimeHeadToHead(
           const oppGoals = isHome ? g.awayGoals! : g.homeGoals!;
           const wentBeyond = g.periodCount > 3;
           const bucket = isHome ? atHome : atAway;
-          if (teamGoals === oppGoals) {
-            ties += 1;
-            bucket.ties += 1;
-          } else if (teamGoals > oppGoals) {
-            if (wentBeyond) otWins += 1;
-            else wins += 1;
+          if (teamGoals === oppGoals) { ties += 1; bucket.ties += 1; }
+          else if (teamGoals > oppGoals) {
+            if (wentBeyond) otWins += 1; else wins += 1;
             bucket.wins += 1;
           } else {
-            if (wentBeyond) otLosses += 1;
-            else losses += 1;
+            if (wentBeyond) otLosses += 1; else losses += 1;
             bucket.losses += 1;
           }
         }
@@ -1517,18 +1315,13 @@ export async function computeAllTimeHeadToHead(
       }
     }),
   );
-
   const sorted = [...seasonLabels].sort();
   return {
     totals: { wins, ties, losses, otWins, otLosses },
     atHome,
     atAway,
     meetings,
-    seasonsCovered: {
-      count: sorted.length,
-      from: sorted[0] ?? null,
-      to: sorted[sorted.length - 1] ?? null,
-    },
+    seasonsCovered: { count: sorted.length, from: sorted[0] ?? null, to: sorted[sorted.length - 1] ?? null },
   };
 }
 
@@ -1560,7 +1353,7 @@ export async function fetchLastMeetingRecap(
   away: string,
 ): Promise<LastMeetingRecap | null> {
   const { getMergedSeasons } = await import("./seasons.server");
-  const seasons = await getMergedSeasons(); // newest first
+  const seasons = await getMergedSeasons();
   let meeting: { seasonLabel: string; g: ScheduleGame } | null = null;
   for (const s of seasons) {
     try {
@@ -1585,10 +1378,6 @@ export async function fetchLastMeetingRecap(
   if (!meeting) return null;
   const gameId = meeting.g.id!;
   const gameUrl = `${STATS_BASE_URL}/Game/Events/${gameId}`;
-  // Single typed construction site for the recap. Every field on
-  // LastMeetingRecap must be supplied here, so adding a new required field
-  // to the type fails the build at exactly one place — the parser below
-  // mutates `result` in place and never re-creates the object.
   const result: LastMeetingRecap = {
     date: meeting.g.date,
     seasonLabel: meeting.seasonLabel,
@@ -1610,8 +1399,6 @@ export async function fetchLastMeetingRecap(
       headers: { "user-agent": "Mozilla/5.0", "cache-control": "no-cache" },
     });
     const html = await res.text();
-    // Shots / PIM totals appear twice in the summary table — first occurrence
-    // is the home team's value, second is the away team's.
     const extractPair = (label: string): [number | null, number | null] => {
       const re = new RegExp(`${label}\\s*</td>\\s*<td[^>]*>\\s*<strong>\\s*(\\d+)\\s*</strong>`, "gi");
       const out: number[] = [];
@@ -1626,15 +1413,7 @@ export async function fetchLastMeetingRecap(
     const cleanName = (s: string) =>
       s.replace(/\s+/g, " ").replace(/[,\s]+$/, "").trim();
     const stripTags = (s: string) =>
-      s
-        .replace(/<[^>]+>/g, " ")
-        .replace(/&nbsp;|\u00a0/g, " ")
-        .replace(/&amp;/g, "&")
-        .replace(/\s+/g, " ")
-        .trim();
-    // The event table has no per-row period column; periods are separated by
-    // <h3>1st period</h3> / 2nd / 3rd / Overtime / Shootout headers. Track the
-    // current period as we walk the rows in document order.
+      s.replace(/<[^>]+>/g, " ").replace(/&nbsp;|\u00a0/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
     const headerToPeriod = (s: string): string | null => {
       const t = s.toLowerCase();
       if (/1st\s*period|första/.test(t)) return "1";
@@ -1679,9 +1458,6 @@ export async function fetchLastMeetingRecap(
       }
       result.goals.push({ teamCode, scorer, assists, period: currentPeriod, time });
     }
-    // Headers appear in document order (3rd, 2nd, 1st in this feed), so the
-    // collected goals are reverse-chronological per period. Sort chronologically
-    // so downstream "first goal" / "GWG" running totals are correct.
     const periodRank: Record<string, number> = { "1": 1, "2": 2, "3": 3, OT: 4, SO: 5 };
     const toSec = (t: string | null) => {
       if (!t) return 0;
@@ -1712,11 +1488,7 @@ export type SeasonTrajectory = {
   leagueAveragePpg: number | null;
 };
 
-function pointsForResult(
-  teamGoals: number,
-  oppGoals: number,
-  wentBeyond: boolean,
-): number {
+function pointsForResult(teamGoals: number, oppGoals: number, wentBeyond: boolean): number {
   if (teamGoals === oppGoals) return 1;
   if (teamGoals > oppGoals) return wentBeyond ? 2 : 3;
   return wentBeyond ? 1 : 0;
@@ -1751,8 +1523,6 @@ export async function fetchSeasonTrajectory(
       cumulativePpg: Number((cumulative / (idx + 1)).toFixed(3)),
     });
   });
-
-  // League average PPG across all played games this season.
   let totalPts = 0;
   let totalSlots = 0;
   for (const g of games) {
@@ -1763,13 +1533,11 @@ export async function fetchSeasonTrajectory(
     totalPts += pointsForResult(hg, ag, wentBeyond) + pointsForResult(ag, hg, wentBeyond);
     totalSlots += 2;
   }
-  const leagueAveragePpg =
-    totalSlots > 0 ? Number((totalPts / totalSlots).toFixed(3)) : null;
-
+  const leagueAveragePpg = totalSlots > 0 ? Number((totalPts / totalSlots).toFixed(3)) : null;
   return { team, seasonLabel: season.label, points, leagueAveragePpg };
 }
 
-// ---------- Full standings (for the Compare page) ----------
+// ---------- Full standings ----------
 
 export type StandingRow = {
   position: number;
@@ -1798,7 +1566,6 @@ export async function fetchFullStandings(season: Season): Promise<StandingRow[]>
   let m: RegExpExecArray | null;
   while ((m = rowRe.exec(html)) !== null) {
     const cells = extractTdCells(m[1]);
-    // Columns: RK, Team, GP, W, T, L, GF:GA (GD), GD, TP, OTW, OTL, GWSW, GWSL
     if (cells.length < 11) continue;
     const position = Number(cells[0]);
     const team = cells[1];
@@ -1814,13 +1581,7 @@ export async function fetchFullStandings(season: Season): Promise<StandingRow[]>
     const pts = Number(cells[8]);
     const otw = Number(cells[9]);
     const otl = Number(cells[10]);
-    if (
-      !Number.isFinite(position) ||
-      !team ||
-      !Number.isFinite(gp) ||
-      !Number.isFinite(pts)
-    )
-      continue;
+    if (!Number.isFinite(position) || !team || !Number.isFinite(gp) || !Number.isFinite(pts)) continue;
     if (seen.has(team)) continue;
     seen.add(team);
     rows.push({
@@ -1841,47 +1602,30 @@ export async function fetchFullStandings(season: Season): Promise<StandingRow[]>
   return rows.sort((a, b) => a.position - b.position);
 }
 
-
-// ---------- League-wide overview (for home-page cards) ----------
+// ---------- League-wide overview ----------
 
 export type LeagueLeaderScorer = {
-  rank: number;
-  name: string;
-  team: string;
-  goals: number | null;
-  assists: number | null;
-  points: number;
-  gamesPlayed: number | null;
+  rank: number; name: string; team: string;
+  goals: number | null; assists: number | null;
+  points: number; gamesPlayed: number | null;
 };
 
 export type LeagueLeaderGoalie = {
-  rank: number;
-  name: string;
-  team: string;
-  gamesPlayed: number;
-  savePct: number | null;
-  gaa: number | null;
-  shutouts: number | null;
-  wins: number | null;
-  losses: number | null;
+  rank: number; name: string; team: string;
+  gamesPlayed: number; savePct: number | null;
+  gaa: number | null; shutouts: number | null;
+  wins: number | null; losses: number | null;
 };
 
 export type HottestTeam = {
-  rank: number;
-  team: string;
-  points: number;
+  rank: number; team: string; points: number;
   results: Array<"W" | "OTW" | "T" | "OTL" | "L">;
-  goalsFor: number;
-  goalsAgainst: number;
+  goalsFor: number; goalsAgainst: number;
 };
 
 export type ScoringTeam = {
-  rank: number;
-  team: string;
-  gamesPlayed: number;
-  goalsFor: number;
-  goalsAgainst: number;
-  perGame: number;
+  rank: number; team: string; gamesPlayed: number;
+  goalsFor: number; goalsAgainst: number; perGame: number;
 };
 
 export type LeagueOverview = {
@@ -1895,52 +1639,40 @@ export type LeagueOverview = {
 
 export async function fetchLeagueOverview(season: Season): Promise<LeagueOverview> {
   const urls = buildUrls(season.competitionId);
-  const [scorersByTeam, goaliesByTeam, standings, games] = await Promise.all([
-    fetchTopScorersFromHtml(urls),
-    fetchGoaliesFromHtml(urls),
+  // fetchScoringPageData already parses top scorers and goalies from one fetch
+  // of urls.scoring — reuse it here to avoid a separate fetch for the overview.
+  const [scoringData, standings, games] = await Promise.all([
+    fetchScoringPageData(urls),
     fetchFullStandings(season),
     getScheduleGames(season).catch(() => [] as ScheduleGame[]),
   ]);
 
   const flatScorers: LeagueLeaderScorer[] = [];
-  for (const [team, list] of Object.entries(scorersByTeam)) {
+  for (const [team, list] of Object.entries(scoringData.topScorers)) {
     for (const s of list) {
       flatScorers.push({
-        rank: 0,
-        name: s.name,
-        team,
-        goals: s.goals ?? null,
-        assists: s.assists ?? null,
-        points: s.points ?? 0,
-        gamesPlayed: s.gamesPlayed ?? null,
+        rank: 0, name: s.name, team,
+        goals: s.goals ?? null, assists: s.assists ?? null,
+        points: s.points ?? 0, gamesPlayed: s.gamesPlayed ?? null,
       });
     }
   }
-  flatScorers.sort(
-    (a, b) => b.points - a.points || (b.goals ?? 0) - (a.goals ?? 0),
-  );
+  flatScorers.sort((a, b) => b.points - a.points || (b.goals ?? 0) - (a.goals ?? 0));
   const topScorers = flatScorers.slice(0, 10).map((s, i) => ({ ...s, rank: i + 1 }));
 
   const flatGoalies: LeagueLeaderGoalie[] = [];
-  for (const [team, list] of Object.entries(goaliesByTeam)) {
+  for (const [team, list] of Object.entries(scoringData.goalies)) {
     for (const g of list) {
       if ((g.gamesPlayed ?? 0) < 5) continue;
       flatGoalies.push({
-        rank: 0,
-        name: g.name,
-        team,
-        gamesPlayed: g.gamesPlayed ?? 0,
-        savePct: g.savePct ?? null,
-        gaa: g.gaa ?? null,
-        shutouts: g.shutouts ?? null,
-        wins: g.wins ?? null,
-        losses: g.losses ?? null,
+        rank: 0, name: g.name, team,
+        gamesPlayed: g.gamesPlayed ?? 0, savePct: g.savePct ?? null,
+        gaa: g.gaa ?? null, shutouts: g.shutouts ?? null,
+        wins: g.wins ?? null, losses: g.losses ?? null,
       });
     }
   }
-  flatGoalies.sort(
-    (a, b) => (b.savePct ?? -Infinity) - (a.savePct ?? -Infinity),
-  );
+  flatGoalies.sort((a, b) => (b.savePct ?? -Infinity) - (a.savePct ?? -Infinity));
   const topGoalies = flatGoalies.slice(0, 10).map((g, i) => ({ ...g, rank: i + 1 }));
 
   const byTeam = new Map<string, ScheduleGame[]>();
@@ -1956,54 +1688,28 @@ export async function fetchLeagueOverview(season: Season): Promise<LeagueOvervie
   for (const [team, list] of byTeam) {
     const last5 = [...list].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 5);
     if (last5.length < 3) continue;
-    let pts = 0;
-    let gf = 0;
-    let ga = 0;
+    let pts = 0, gf = 0, ga = 0;
     const results: HottestTeam["results"] = [];
     for (const g of last5) {
       const isHome = g.homeTeam === team;
       const tg = (isHome ? g.homeGoals : g.awayGoals) ?? 0;
       const og = (isHome ? g.awayGoals : g.homeGoals) ?? 0;
-      gf += tg;
-      ga += og;
+      gf += tg; ga += og;
       const beyond = g.periodCount > 3;
-      if (tg === og) {
-        pts += 1;
-        results.push("T");
-      } else if (tg > og) {
-        if (beyond) {
-          pts += 2;
-          results.push("OTW");
-        } else {
-          pts += 3;
-          results.push("W");
-        }
-      } else {
-        if (beyond) {
-          pts += 1;
-          results.push("OTL");
-        } else {
-          results.push("L");
-        }
-      }
+      if (tg === og) { pts += 1; results.push("T"); }
+      else if (tg > og) { if (beyond) { pts += 2; results.push("OTW"); } else { pts += 3; results.push("W"); } }
+      else { if (beyond) { pts += 1; results.push("OTL"); } else { results.push("L"); } }
     }
     hot.push({ rank: 0, team, points: pts, results, goalsFor: gf, goalsAgainst: ga });
   }
-  hot.sort(
-    (a, b) =>
-      b.points - a.points ||
-      (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst),
-  );
+  hot.sort((a, b) => b.points - a.points || (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst));
   const hottestTeams = hot.slice(0, 5).map((h, i) => ({ ...h, rank: i + 1 }));
 
   const scoringRows: ScoringTeam[] = standings
     .filter((r) => r.gamesPlayed > 0)
     .map((r) => ({
-      rank: 0,
-      team: r.team,
-      gamesPlayed: r.gamesPlayed,
-      goalsFor: r.goalsFor,
-      goalsAgainst: r.goalsAgainst,
+      rank: 0, team: r.team, gamesPlayed: r.gamesPlayed,
+      goalsFor: r.goalsFor, goalsAgainst: r.goalsAgainst,
       perGame: r.goalsFor / r.gamesPlayed,
     }));
   const highestScoring = [...scoringRows]
@@ -2011,72 +1717,45 @@ export async function fetchLeagueOverview(season: Season): Promise<LeagueOvervie
     .slice(0, 5)
     .map((r, i) => ({ ...r, rank: i + 1 }));
   const bestDefenses = [...scoringRows]
-    .sort(
-      (a, b) =>
-        a.goalsAgainst / a.gamesPlayed - b.goalsAgainst / b.gamesPlayed,
-    )
+    .sort((a, b) => a.goalsAgainst / a.gamesPlayed - b.goalsAgainst / b.gamesPlayed)
     .slice(0, 5)
-    .map((r, i) => ({
-      ...r,
-      rank: i + 1,
-      perGame: r.goalsAgainst / r.gamesPlayed,
-    }));
+    .map((r, i) => ({ ...r, rank: i + 1, perGame: r.goalsAgainst / r.gamesPlayed }));
 
-  return {
-    seasonLabel: season.label,
-    topScorers,
-    topGoalies,
-    hottestTeams,
-    highestScoring,
-    bestDefenses,
-  };
+  return { seasonLabel: season.label, topScorers, topGoalies, hottestTeams, highestScoring, bestDefenses };
 }
 
-// ---------- League-wide players (for /spelare search page) ----------
+// ---------- League-wide players (/spelare) ----------
 
 export type LeaguePlayerRow = {
-  team: string;
-  name: string;
-  position: string;
-  gamesPlayed: number | null;
-  goals: number | null;
-  assists: number | null;
-  points: number | null;
-  pim: number | null;
+  team: string; name: string; position: string;
+  gamesPlayed: number | null; goals: number | null;
+  assists: number | null; points: number | null; pim: number | null;
 };
 
-export async function fetchAllLeaguePlayers(
-  season: Season,
-): Promise<LeaguePlayerRow[]> {
+export async function fetchAllLeaguePlayers(season: Season): Promise<LeaguePlayerRow[]> {
   const urls = buildUrls(season.competitionId);
   const res = await fetch(urls.scoring, {
     headers: { "user-agent": "Mozilla/5.0", "cache-control": "no-cache" },
   });
   if (!res.ok) throw new Error(`HTTPError ${res.status} ${urls.scoring}`);
   const html = await res.text();
-
   const anchorRe = /<a\s+id="([^"]+)">\s*<\/a>/g;
   const anchors: Array<{ name: string; index: number }> = [];
   let am: RegExpExecArray | null;
   while ((am = anchorRe.exec(html)) !== null) {
     anchors.push({ name: am[1], index: am.index });
   }
-
   const out: LeaguePlayerRow[] = [];
   for (let i = 0; i < anchors.length; i++) {
     const team = anchors[i].name;
     const start = anchors[i].index;
     const end = i + 1 < anchors.length ? anchors[i + 1].index : html.length;
-    let section = html.slice(start, end);
-
-    // Skater table: stop before "Goalkeeping Statistics" subtable.
-    const gkIdx = section.search(/Goalkeeping Statistics/i);
-    const skaterSection = gkIdx === -1 ? section : section.slice(0, gkIdx);
-    const gkSection = gkIdx === -1 ? "" : section.slice(gkIdx);
-
+    const fullSection = html.slice(start, end);
+    const gkIdx = fullSection.search(/Goalkeeping Statistics/i);
+    const skaterSection = gkIdx === -1 ? fullSection : fullSection.slice(0, gkIdx);
+    const gkSection = gkIdx === -1 ? "" : fullSection.slice(gkIdx);
     const rowRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
     let rowMatch: RegExpExecArray | null;
-    // Skaters: [rank, no, name, pos, GP, G, A, TP, PIM, ...]
     while ((rowMatch = rowRe.exec(skaterSection)) !== null) {
       const cells = extractTdCells(rowMatch[1]);
       if (cells.length < 9) continue;
@@ -2091,9 +1770,7 @@ export async function fetchAllLeaguePlayers(
       const p = Number(cells[7]);
       const pim = Number(cells[8]);
       out.push({
-        team,
-        name,
-        position: pos,
+        team, name, position: pos,
         gamesPlayed: Number.isFinite(gp) ? gp : null,
         goals: Number.isFinite(g) ? g : null,
         assists: Number.isFinite(a) ? a : null,
@@ -2101,8 +1778,6 @@ export async function fetchAllLeaguePlayers(
         pim: Number.isFinite(pim) ? pim : null,
       });
     }
-
-    // Goalies: cells [Rk, No, Name, GPT, GKD, GPI, MIP, GA, SVS, SOG, SVS%, GAA, SO, W, L]
     if (gkSection) {
       const gkRe = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
       let gm: RegExpExecArray | null;
@@ -2113,16 +1788,7 @@ export async function fetchAllLeaguePlayers(
         if (!name) continue;
         const gp = Number(cells[5]);
         if (!Number.isFinite(gp) || gp === 0) continue;
-        out.push({
-          team,
-          name,
-          position: "G",
-          gamesPlayed: gp,
-          goals: null,
-          assists: null,
-          points: null,
-          pim: null,
-        });
+        out.push({ team, name, position: "G", gamesPlayed: gp, goals: null, assists: null, points: null, pim: null });
       }
     }
   }
