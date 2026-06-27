@@ -244,13 +244,17 @@ function SchemaPage() {
                         {formatSwedishDate(g.date)}
                       </div>
                       <div className="flex min-w-0 items-center gap-2">
-                        <TeamLogo team={g.homeTeam} size="sm" />
+                        <span className="hidden sm:inline-flex">
+                          <TeamLogo team={g.homeTeam} size="sm" />
+                        </span>
                         <TeamName
                           name={g.homeTeam}
                           highlighted={teamFilter === g.homeTeam}
                         />
                         <span className="mx-1 shrink-0 text-muted-foreground">vs</span>
-                        <TeamLogo team={g.awayTeam} size="sm" />
+                        <span className="hidden sm:inline-flex">
+                          <TeamLogo team={g.awayTeam} size="sm" />
+                        </span>
                         <TeamName
                           name={g.awayTeam}
                           highlighted={teamFilter === g.awayTeam}
