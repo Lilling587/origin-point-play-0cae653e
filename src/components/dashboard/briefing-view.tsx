@@ -137,6 +137,32 @@ export function BriefingView({
             )}
             Share as image
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" title="Kopiera briefingen som text">
+                {copied ? (
+                  <Check className="mr-2 h-4 w-4 text-green-500" />
+                ) : (
+                  <ClipboardCopy className="mr-2 h-4 w-4" />
+                )}
+                {copied === "text"
+                  ? "Text kopierad"
+                  : copied === "markdown"
+                    ? "Markdown kopierad"
+                    : "Kopiera"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleCopy("text")}>
+                <FileText className="mr-2 h-4 w-4" />
+                Kopiera som text (TV-mall)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleCopy("markdown")}>
+                <FileText className="mr-2 h-4 w-4" />
+                Kopiera som markdown
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="outline"
             size="sm"
