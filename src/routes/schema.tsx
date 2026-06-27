@@ -61,6 +61,23 @@ function monthKey(iso: string): string {
   return d.toLocaleDateString("sv-SE", { year: "numeric", month: "long" });
 }
 
+function TeamName({ name, highlighted }: { name: string; highlighted?: boolean }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={`truncate ${highlighted ? "font-semibold" : ""}`}
+        >
+          {name}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" align="center">
+        <p>{name}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 function SchemaPage() {
   const { defaultSeason } = Route.useLoaderData();
   const fetchSeasons = useServerFn(listSeasons);
