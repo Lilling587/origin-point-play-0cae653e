@@ -99,7 +99,6 @@ function PlayersPage() {
       // regardless of which order the user types the name.
       const combined = `${raw} ${normalized}`;
       const words = q.split(/\s+/).filter(Boolean);
-      console.log("query:", q, "words:", words, "combined example:", `${playersQuery.data?.players?.[0]?.name ?? ""}`);
 
       return words.every((w) => combined.includes(w)) || p.team.toLowerCase().includes(q);
     });
