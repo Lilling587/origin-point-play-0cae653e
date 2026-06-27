@@ -154,6 +154,12 @@ function SchemaPage() {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Button asChild variant="outline" size="sm">
+                <Link to="/tabell">
+                  <ListOrdered className="mr-2 h-4 w-4" />
+                  Tabell
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="sm">
                 <Link to="/">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Tillbaka
