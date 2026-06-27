@@ -1,5 +1,16 @@
 import { useState } from "react";
-import { ImageDown, Loader2, Printer, RefreshCw } from "lucide-react";
+import { Check, ClipboardCopy, FileText, ImageDown, Loader2, Printer, RefreshCw } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  briefingToMarkdown,
+  briefingToTvText,
+  copyToClipboard,
+} from "@/lib/briefing-export";
 import type { Briefing } from "@/lib/stats.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,6 +54,17 @@ export function BriefingView({
   onRefresh: () => void;
 }) {
   const [exporting, setExporting] = useState(false);
+  const [copied, setCopied] = useState<null | "text" | "markdown">(null);
+
+  const handleCopy = async (kind: "text" | "markdown") => {
+    const payload =
+      kind === "text" ? briefingToTvText(data) : briefingToMarkdown(data);
+    const ok = await copyToClipboard(payload);
+    if (ok) {
+      setCopied(kind);
+      window.setTimeout(() => setCopied(null), 2000);
+    }
+  };
   const handleShareImage = async () => {
     if (typeof window === "undefined") return;
     const node = document.getElementById("briefing-capture");
@@ -115,6 +137,32 @@ export function BriefingView({
             )}
             Share as image
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" title="Kopiera briefingen som text">
+                {copied ? (
+                  <Check className="mr-2 h-4 w-4 text-green-500" />
+                ) : (
+                  <ClipboardCopy className="mr-2 h-4 w-4" />
+                )}
+                {copied === "text"
+                  ? "Text kopierad"
+                  : copied === "markdown"
+                    ? "Markdown kopierad"
+                    : "Kopiera"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleCopy("text")}>
+                <FileText className="mr-2 h-4 w-4" />
+                Kopiera som text (TV-mall)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleCopy("markdown")}>
+                <FileText className="mr-2 h-4 w-4" />
+                Kopiera som markdown
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="outline"
             size="sm"

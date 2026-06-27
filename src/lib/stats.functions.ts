@@ -576,3 +576,59 @@ export const getLeaguePlayers = createServerFn({ method: "POST" })
     await setCached(key, payload);
     return payload;
   });
+
+// ---------- Next match for a given team ----------
+
+export type NextMatchResult = {
+  season: string;
+  team: string;
+  match:
+    | {
+        id: string | null;
+        date: string;
+        homeTeam: string;
+        awayTeam: string;
+        isHome: boolean;
+        opponent: string;
+      }
+    | null;
+};
+
+export const getNextMatchForTeam = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({ team: z.string().min(1), season: z.string().optional() })
+      .parse(input),
+  )
+  .handler(async ({ data }): Promise<NextMatchResult> => {
+    const season = await resolveSeason(data.season);
+    const { getScheduleGames } = await import("./stats.server");
+    const games = await getScheduleGames(season);
+    const today = new Date().toISOString().slice(0, 10);
+    const lower = data.team.toLowerCase();
+    const upcoming = games
+      .filter(
+        (g) =>
+          !g.played &&
+          g.date >= today &&
+          (g.homeTeam.toLowerCase() === lower || g.awayTeam.toLowerCase() === lower),
+      )
+      .sort((a, b) => (a.date < b.date ? -1 : 1));
+    const next = upcoming[0];
+    if (!next) {
+      return { season: season.label, team: data.team, match: null };
+    }
+    const isHome = next.homeTeam.toLowerCase() === lower;
+    return {
+      season: season.label,
+      team: data.team,
+      match: {
+        id: next.id,
+        date: next.date,
+        homeTeam: next.homeTeam,
+        awayTeam: next.awayTeam,
+        isHome,
+        opponent: isHome ? next.awayTeam : next.homeTeam,
+      },
+    };
+  });

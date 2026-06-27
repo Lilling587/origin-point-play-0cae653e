@@ -25,6 +25,7 @@ import {
   CalendarDays,
   Check,
   Info,
+  ListOrdered,
   Loader2,
   LogOut,
   RefreshCw,
@@ -53,6 +54,7 @@ import { PendingSeasonsBanner } from "@/components/dashboard/pending-seasons-ban
 import { BriefingSkeleton } from "@/components/dashboard/briefing-skeleton";
 import { BriefingView } from "@/components/dashboard/briefing-view";
 import { PostgameRecapCard } from "@/components/dashboard/postgame/postgame-recap-card";
+import { NextMatchCard } from "@/components/dashboard/cards/next-match-card";
 
 // Re-touch to keep tree-shaker honest about the unused hook import.
 void _useIsMobile;
@@ -496,6 +498,12 @@ function Dashboard() {
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+              <Link to="/tabell">
+                <ListOrdered className="mr-2 h-4 w-4 shrink-0" />
+                Tabell
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
               <Link to="/spelare">
                 <Users className="mr-2 h-4 w-4 shrink-0" />
                 Spelare
@@ -576,6 +584,11 @@ function Dashboard() {
             qc.invalidateQueries({ queryKey: ["seasons"] });
           }}
         />
+
+        {favorite && activeSeason ? (
+          <NextMatchCard team={favorite} season={activeSeason} />
+        ) : null}
+
 
         <Card>
           <CardHeader>

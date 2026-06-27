@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CalendarDays, Loader2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, ListOrdered, Loader2 } from "lucide-react";
 
 import { listSeasons, getSeasonSchedule } from "@/lib/stats.functions";
 import type { ScheduleEntry } from "@/lib/stats.functions";
@@ -153,6 +153,12 @@ function SchemaPage() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/tabell">
+                  <ListOrdered className="mr-2 h-4 w-4" />
+                  Tabell
+                </Link>
+              </Button>
               <Button asChild variant="outline" size="sm">
                 <Link to="/">
                   <ArrowLeft className="mr-2 h-4 w-4" />
