@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CalendarDays, Loader2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, ListOrdered, Loader2 } from "lucide-react";
 
 import { listSeasons, getSeasonSchedule } from "@/lib/stats.functions";
 import type { ScheduleEntry } from "@/lib/stats.functions";
