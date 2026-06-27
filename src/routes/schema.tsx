@@ -20,6 +20,7 @@ import { SearchableTeamPicker } from "@/components/dashboard/searchable-team-pic
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TeamLogo } from "@/components/team-logo";
 import { translateError } from "@/lib/error-messages";
+import { shortTeamName } from "@/lib/team-short-names";
 
 const seasonsQO = queryOptions({
   queryKey: ["seasons"],
@@ -62,13 +63,13 @@ function monthKey(iso: string): string {
 }
 
 function TeamName({ name, highlighted }: { name: string; highlighted?: boolean }) {
+  const short = shortTeamName(name);
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span
-          className={`truncate ${highlighted ? "font-semibold" : ""}`}
-        >
-          {name}
+        <span className={`truncate ${highlighted ? "font-semibold" : ""}`}>
+          <span className="sm:hidden">{short}</span>
+          <span className="hidden sm:inline">{name}</span>
         </span>
       </TooltipTrigger>
       <TooltipContent side="top" align="center">
