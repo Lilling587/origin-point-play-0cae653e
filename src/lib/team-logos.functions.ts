@@ -16,9 +16,14 @@ export const ensureTeamLogo = createServerFn({ method: "POST" })
     z.object({ team: z.string().min(1) }).parse(input),
   )
   .handler(async ({ data }): Promise<{ team: string; url: string | null }> => {
-    const { ensureLogoForTeam } = await import("./team-logos.server");
-    const url = await ensureLogoForTeam(data.team);
-    return { team: data.team, url };
+    try {
+      const { ensureLogoForTeam } = await import("./team-logos.server");
+      const url = await ensureLogoForTeam(data.team);
+      return { team: data.team, url };
+    } catch (error) {
+      console.error("ensureTeamLogo failed", data.team, error);
+      return { team: data.team, url: null };
+    }
   });
 
 // ---------- Admin ----------
