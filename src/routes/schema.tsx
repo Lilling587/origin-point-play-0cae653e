@@ -214,49 +214,48 @@ function SchemaPage() {
                 {games.map((g, i) => (
                   <div
                     key={`${g.date}-${g.homeTeam}-${g.awayTeam}-${i}`}
-                    className="flex flex-wrap items-center gap-3 py-2 text-sm"
+                    className="grid grid-cols-[5rem_minmax(0,1fr)_auto] items-center gap-3 py-2 text-sm sm:grid-cols-[8rem_minmax(0,1fr)_auto]"
                   >
-                    <div className="w-32 shrink-0 text-muted-foreground">
+                    <div className="min-w-0 shrink-0 text-xs text-muted-foreground sm:text-sm">
                       {formatSwedishDate(g.date)}
                     </div>
-                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
                       <TeamLogo team={g.homeTeam} size="sm" />
                       <span
-                        className={
-                          teamFilter === g.homeTeam ? "font-semibold" : ""
-                        }
+                        className={`truncate ${teamFilter === g.homeTeam ? "font-semibold" : ""}`}
                       >
                         {g.homeTeam}
                       </span>
-                      <span className="mx-1 text-muted-foreground">vs</span>
+                      <span className="mx-1 shrink-0 text-muted-foreground">vs</span>
                       <TeamLogo team={g.awayTeam} size="sm" />
                       <span
-                        className={
-                          teamFilter === g.awayTeam ? "font-semibold" : ""
-                        }
+                        className={`truncate ${teamFilter === g.awayTeam ? "font-semibold" : ""}`}
                       >
                         {g.awayTeam}
                       </span>
                     </div>
-                    {g.played ? (
-                      g.id ? (
-                        <a
-                          href={`https://stats.swehockey.se/Game/Events/${g.id}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-mono text-primary hover:underline"
-                        >
-                          {g.homeGoals}–{g.awayGoals} ↗
-                        </a>
+                    <div className="shrink-0 justify-self-end">
+                      {g.played ? (
+                        g.id ? (
+                          <a
+                            href={`https://stats.swehockey.se/Game/Events/${g.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-mono text-primary hover:underline"
+                          >
+                            {g.homeGoals}–{g.awayGoals} ↗
+                          </a>
+                        ) : (
+                          <span className="font-mono">
+                            {g.homeGoals}–{g.awayGoals}
+                          </span>
+                        )
                       ) : (
-                        <span className="font-mono">
-                          {g.homeGoals}–{g.awayGoals}
-                        </span>
-                      )
-                    ) : (
-                      <Badge variant="outline">Kommande</Badge>
-                    )}
+                        <Badge variant="outline">Kommande</Badge>
+                      )}
+                    </div>
                   </div>
+
                 ))}
               </CardContent>
             </Card>
