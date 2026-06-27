@@ -585,6 +585,11 @@ function Dashboard() {
           }}
         />
 
+        {favorite && activeSeason ? (
+          <NextMatchCard team={favorite} season={activeSeason} />
+        ) : null}
+
+
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Välj lag</CardTitle>
