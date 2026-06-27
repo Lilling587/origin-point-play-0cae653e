@@ -54,6 +54,17 @@ export function BriefingView({
   onRefresh: () => void;
 }) {
   const [exporting, setExporting] = useState(false);
+  const [copied, setCopied] = useState<null | "text" | "markdown">(null);
+
+  const handleCopy = async (kind: "text" | "markdown") => {
+    const payload =
+      kind === "text" ? briefingToTvText(data) : briefingToMarkdown(data);
+    const ok = await copyToClipboard(payload);
+    if (ok) {
+      setCopied(kind);
+      window.setTimeout(() => setCopied(null), 2000);
+    }
+  };
   const handleShareImage = async () => {
     if (typeof window === "undefined") return;
     const node = document.getElementById("briefing-capture");
