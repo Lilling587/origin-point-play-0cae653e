@@ -283,7 +283,11 @@ export const getTodaysMatchup = createServerFn({ method: "POST" })
     const d = parts.find((p) => p.type === "day")?.value ?? "";
     const today = `${y}-${m}-${d}`;
     const { findMatchupOnDate } = await import("./stats.server");
-    const match = await findMatchupOnDate(season, today);
+    const { recordScrape } = await import("./scrape-metrics.server");
+    const match = await recordScrape(
+      { endpoint: "todaysMatchup", season: season.label, context: { today } },
+      () => findMatchupOnDate(season, today),
+    );
     return { date: today, match, season: season.label };
   });
 
@@ -621,9 +625,12 @@ export const getNextMatchForTeam = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<NextMatchResult> => {
     const season = await resolveSeason(data.season);
     const { getScheduleGames } = await import("./stats.server");
-    const games = await getScheduleGames(season);
+    const { recordScrape } = await import("./scrape-metrics.server");
+    const games = await recordScrape(
+      { endpoint: "nextMatchForTeam", season: season.label, context: { team: data.team } },
+      () => getScheduleGames(season),
+    );
     const today = new Date().toISOString().slice(0, 10);
-    const lower = data.team.toLowerCase();
     const upcoming = games
       .filter(
         (g) =>
