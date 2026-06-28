@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TabellRouteImport } from './routes/tabell'
 import { Route as SpelareRouteImport } from './routes/spelare'
 import { Route as SchemaRouteImport } from './routes/schema'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -23,11 +22,6 @@ import { Route as AuthenticatedAdminLogosRouteImport } from './routes/_authentic
 import { Route as ApiPublicHooksPregameEmailsRouteImport } from './routes/api/public/hooks/pregame-emails'
 import { Route as ApiPublicHooksPostgameEmailsRouteImport } from './routes/api/public/hooks/postgame-emails'
 
-const TabellRoute = TabellRouteImport.update({
-  id: '/tabell',
-  path: '/tabell',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SpelareRoute = SpelareRouteImport.update({
   id: '/spelare',
   path: '/spelare',
@@ -98,7 +92,6 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/schema': typeof SchemaRoute
   '/spelare': typeof SpelareRoute
-  '/tabell': typeof TabellRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/index/': typeof IndexIndexRoute
   '/admin/logos': typeof AuthenticatedAdminLogosRoute
@@ -112,7 +105,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/schema': typeof SchemaRoute
   '/spelare': typeof SpelareRoute
-  '/tabell': typeof TabellRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/index': typeof IndexIndexRoute
   '/admin/logos': typeof AuthenticatedAdminLogosRoute
@@ -128,7 +120,6 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/schema': typeof SchemaRoute
   '/spelare': typeof SpelareRoute
-  '/tabell': typeof TabellRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/index/': typeof IndexIndexRoute
   '/_authenticated/admin/logos': typeof AuthenticatedAdminLogosRoute
@@ -144,7 +135,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/schema'
     | '/spelare'
-    | '/tabell'
     | '/notifications'
     | '/index/'
     | '/admin/logos'
@@ -158,7 +148,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/schema'
     | '/spelare'
-    | '/tabell'
     | '/notifications'
     | '/index'
     | '/admin/logos'
@@ -173,7 +162,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/schema'
     | '/spelare'
-    | '/tabell'
     | '/_authenticated/notifications'
     | '/index/'
     | '/_authenticated/admin/logos'
@@ -189,7 +177,6 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SchemaRoute: typeof SchemaRoute
   SpelareRoute: typeof SpelareRoute
-  TabellRoute: typeof TabellRoute
   IndexIndexRoute: typeof IndexIndexRoute
   ApiPublicHooksPostgameEmailsRoute: typeof ApiPublicHooksPostgameEmailsRoute
   ApiPublicHooksPregameEmailsRoute: typeof ApiPublicHooksPregameEmailsRoute
@@ -197,13 +184,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/tabell': {
-      id: '/tabell'
-      path: '/tabell'
-      fullPath: '/tabell'
-      preLoaderRoute: typeof TabellRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/spelare': {
       id: '/spelare'
       path: '/spelare'
@@ -312,7 +292,6 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SchemaRoute: SchemaRoute,
   SpelareRoute: SpelareRoute,
-  TabellRoute: TabellRoute,
   IndexIndexRoute: IndexIndexRoute,
   ApiPublicHooksPostgameEmailsRoute: ApiPublicHooksPostgameEmailsRoute,
   ApiPublicHooksPregameEmailsRoute: ApiPublicHooksPregameEmailsRoute,
