@@ -48,7 +48,7 @@ async function logRow(row: {
 }) {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("scrape_metrics").insert(row);
+    await supabaseAdmin.from("scrape_metrics").insert(row as never);
   } catch (e) {
     console.warn("[scrape-metrics] insert failed:", (e as Error).message);
   }
