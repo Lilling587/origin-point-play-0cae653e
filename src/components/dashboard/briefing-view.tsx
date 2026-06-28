@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Check, ClipboardCopy, FileText, ImageDown, Loader2, Printer, RefreshCw } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Check, ClipboardCopy, FileText, ImageDown, Loader2, Printer, RefreshCw, Tv } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -163,6 +164,24 @@ export function BriefingView({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            title="Öppna TV-läget (auto-roterande matchkort)"
+          >
+            <Link
+              to="/tv/$home/$away"
+              params={{
+                home: encodeURIComponent(data.home.name),
+                away: encodeURIComponent(data.away.name),
+              }}
+              target="_blank"
+            >
+              <Tv className="mr-2 h-4 w-4" />
+              TV-läge
+            </Link>
+          </Button>
           <Button
             variant="outline"
             size="sm"
