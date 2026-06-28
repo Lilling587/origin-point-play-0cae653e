@@ -137,6 +137,42 @@ export type Database = {
         }
         Relationships: []
       }
+      scrape_metrics: {
+        Row: {
+          cache_hit: boolean
+          context: Json | null
+          endpoint: string
+          error: string | null
+          fetched_at: string
+          id: string
+          latency_ms: number
+          season: string | null
+          status: string
+        }
+        Insert: {
+          cache_hit?: boolean
+          context?: Json | null
+          endpoint: string
+          error?: string | null
+          fetched_at?: string
+          id?: string
+          latency_ms: number
+          season?: string | null
+          status: string
+        }
+        Update: {
+          cache_hit?: boolean
+          context?: Json | null
+          endpoint?: string
+          error?: string | null
+          fetched_at?: string
+          id?: string
+          latency_ms?: number
+          season?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       season_check_meta: {
         Row: {
           id: number

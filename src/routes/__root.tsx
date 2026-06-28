@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { reportError } from "../lib/error-reporter";
 import { installReloadDiagnostics } from "../lib/reload-diagnostics";
+import { registerServiceWorker } from "../lib/register-sw";
 import { Toaster } from "../components/ui/sonner";
 import { ThemeProvider, themeBootScript } from "../components/theme-provider";
 
@@ -82,20 +83,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Producent-statistik · HockeyEttan Södra" },
+      { name: "description", content: "Matchstatistik för HockeyEttan Södra-sändningar." },
+      { name: "theme-color", content: "#0F172A" },
+      { property: "og:title", content: "Producent-statistik · HockeyEttan Södra" },
+      { property: "og:description", content: "Matchstatistik för HockeyEttan Södra-sändningar." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/pwa-icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/pwa-icon-512.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -123,6 +123,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(() => {
     installReloadDiagnostics();
+    registerServiceWorker();
   }, []);
 
   return (

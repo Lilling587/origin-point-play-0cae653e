@@ -196,10 +196,15 @@ export const getMatchupBriefing = createServerFn({ method: "POST" })
     const { getCached, setCached, buildBriefing } = await import(
       "./stats.server"
     );
+    const { recordScrape } = await import("./scrape-metrics.server");
     const key = `${seasonCachePrefix(season.label)}:briefing:${data.home}__vs__${data.away}`.toLowerCase();
     if (!data.force) {
       const cached = await getCached(key, CACHE_TTL_MS);
       if (cached) {
+        await recordScrape(
+          { endpoint: "briefing", season: season.label, cacheHit: true, context: { home: data.home, away: data.away } },
+          async () => true,
+        );
         return {
           ...(cached as { briefing: Briefing; fetchedAt: string }),
           cached: true,
@@ -207,7 +212,10 @@ export const getMatchupBriefing = createServerFn({ method: "POST" })
         };
       }
     }
-    const briefing = await buildBriefing(data.home, data.away, season);
+    const briefing = await recordScrape(
+      { endpoint: "briefing", season: season.label, cacheHit: false, context: { home: data.home, away: data.away } },
+      () => buildBriefing(data.home, data.away, season),
+    );
     const payload = { briefing, fetchedAt: new Date().toISOString() };
     await setCached(key, payload);
     return { ...payload, cached: false, season: season.label };
@@ -275,7 +283,11 @@ export const getTodaysMatchup = createServerFn({ method: "POST" })
     const d = parts.find((p) => p.type === "day")?.value ?? "";
     const today = `${y}-${m}-${d}`;
     const { findMatchupOnDate } = await import("./stats.server");
-    const match = await findMatchupOnDate(season, today);
+    const { recordScrape } = await import("./scrape-metrics.server");
+    const match = await recordScrape(
+      { endpoint: "todaysMatchup", season: season.label, context: { today } },
+      () => findMatchupOnDate(season, today),
+    );
     return { date: today, match, season: season.label };
   });
 
@@ -416,9 +428,19 @@ export const getFullStandings = createServerFn({ method: "POST" })
     const { getCached, setCached, fetchFullStandings } = await import(
       "./stats.server"
     );
+    const { recordScrape } = await import("./scrape-metrics.server");
     const cached = await getCached(key, CACHE_TTL_MS);
-    if (cached) return cached as { rows: StandingsRow[]; season: string };
-    const rows = await fetchFullStandings(season);
+    if (cached) {
+      await recordScrape(
+        { endpoint: "standings", season: season.label, cacheHit: true },
+        async () => true,
+      );
+      return cached as { rows: StandingsRow[]; season: string };
+    }
+    const rows = await recordScrape(
+      { endpoint: "standings", season: season.label, cacheHit: false },
+      () => fetchFullStandings(season),
+    );
     const payload = { rows, season: season.label };
     await setCached(key, payload);
     return payload;
@@ -603,7 +625,11 @@ export const getNextMatchForTeam = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<NextMatchResult> => {
     const season = await resolveSeason(data.season);
     const { getScheduleGames } = await import("./stats.server");
-    const games = await getScheduleGames(season);
+    const { recordScrape } = await import("./scrape-metrics.server");
+    const games = await recordScrape(
+      { endpoint: "nextMatchForTeam", season: season.label, context: { team: data.team } },
+      () => getScheduleGames(season),
+    );
     const today = new Date().toISOString().slice(0, 10);
     const lower = data.team.toLowerCase();
     const upcoming = games
