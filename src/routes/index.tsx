@@ -25,7 +25,6 @@ import {
   CalendarDays,
   Check,
   Info,
-  Info,
   Loader2,
   LogOut,
   RefreshCw,
@@ -34,7 +33,6 @@ import {
   Star,
   Users,
   X,
-
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { supabase } from "@/integrations/supabase/client";
