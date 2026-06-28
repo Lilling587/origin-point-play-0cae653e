@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { z } from "zod";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { ArrowLeft } from "lucide-react";
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/tv/$home/$away")({
   component: TvMode,
 });
 
-type Card = { title: string; render: (b: Briefing) => JSX.Element };
+type Card = { title: string; render: (b: Briefing) => React.ReactNode };
 
 const CARDS: Card[] = [
   {
