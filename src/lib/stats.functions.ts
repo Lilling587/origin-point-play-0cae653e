@@ -631,6 +631,7 @@ export const getNextMatchForTeam = createServerFn({ method: "POST" })
       () => getScheduleGames(season),
     );
     const today = new Date().toISOString().slice(0, 10);
+    const lower = data.team.toLowerCase();
     const upcoming = games
       .filter(
         (g) =>
