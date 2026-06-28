@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ListOrdered, Loader2, RotateCcw, Search, Users, X } from "lucide-react";
+import { ArrowLeft, Loader2, RotateCcw, Search, Users, X } from "lucide-react";
 
 import { listSeasons, getLeaguePlayers } from "@/lib/stats.functions";
 import type { LeaguePlayer } from "@/lib/stats.functions";
@@ -150,12 +150,6 @@ function PlayersPage() {
             <p className="text-sm text-muted-foreground">HockeyEttan Södra · sök bland alla spelare i ligan</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link to="/tabell">
-                <ListOrdered className="mr-2 h-4 w-4" />
-                Tabell
-              </Link>
-            </Button>
             <Button asChild variant="outline" size="sm">
               <Link to="/">
                 <ArrowLeft className="mr-2 h-4 w-4" />

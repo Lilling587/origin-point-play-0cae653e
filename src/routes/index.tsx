@@ -25,7 +25,7 @@ import {
   CalendarDays,
   Check,
   Info,
-  ListOrdered,
+  Info,
   Loader2,
   LogOut,
   RefreshCw,
@@ -34,6 +34,7 @@ import {
   Star,
   Users,
   X,
+
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { supabase } from "@/integrations/supabase/client";
@@ -495,12 +496,6 @@ function Dashboard() {
               <Link to="/schema">
                 <CalendarDays className="mr-2 h-4 w-4 shrink-0" />
                 Spelschema
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-              <Link to="/tabell">
-                <ListOrdered className="mr-2 h-4 w-4 shrink-0" />
-                Tabell
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
