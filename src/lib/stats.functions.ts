@@ -196,10 +196,15 @@ export const getMatchupBriefing = createServerFn({ method: "POST" })
     const { getCached, setCached, buildBriefing } = await import(
       "./stats.server"
     );
+    const { recordScrape } = await import("./scrape-metrics.server");
     const key = `${seasonCachePrefix(season.label)}:briefing:${data.home}__vs__${data.away}`.toLowerCase();
     if (!data.force) {
       const cached = await getCached(key, CACHE_TTL_MS);
       if (cached) {
+        await recordScrape(
+          { endpoint: "briefing", season: season.label, cacheHit: true, context: { home: data.home, away: data.away } },
+          async () => true,
+        );
         return {
           ...(cached as { briefing: Briefing; fetchedAt: string }),
           cached: true,
@@ -207,7 +212,10 @@ export const getMatchupBriefing = createServerFn({ method: "POST" })
         };
       }
     }
-    const briefing = await buildBriefing(data.home, data.away, season);
+    const briefing = await recordScrape(
+      { endpoint: "briefing", season: season.label, cacheHit: false, context: { home: data.home, away: data.away } },
+      () => buildBriefing(data.home, data.away, season),
+    );
     const payload = { briefing, fetchedAt: new Date().toISOString() };
     await setCached(key, payload);
     return { ...payload, cached: false, season: season.label };
@@ -416,9 +424,19 @@ export const getFullStandings = createServerFn({ method: "POST" })
     const { getCached, setCached, fetchFullStandings } = await import(
       "./stats.server"
     );
+    const { recordScrape } = await import("./scrape-metrics.server");
     const cached = await getCached(key, CACHE_TTL_MS);
-    if (cached) return cached as { rows: StandingsRow[]; season: string };
-    const rows = await fetchFullStandings(season);
+    if (cached) {
+      await recordScrape(
+        { endpoint: "standings", season: season.label, cacheHit: true },
+        async () => true,
+      );
+      return cached as { rows: StandingsRow[]; season: string };
+    }
+    const rows = await recordScrape(
+      { endpoint: "standings", season: season.label, cacheHit: false },
+      () => fetchFullStandings(season),
+    );
     const payload = { rows, season: season.label };
     await setCached(key, payload);
     return payload;
