@@ -50,7 +50,7 @@ function LogsPage() {
     refetchInterval: 30_000,
   });
 
-  const rows = logsQuery.data?.rows ?? [];
+  const rows: ErrorLogRow[] = logsQuery.data?.rows ?? [];
 
   return (
     <div className="min-h-screen bg-background">
