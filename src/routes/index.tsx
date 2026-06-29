@@ -520,7 +520,7 @@ function Dashboard() {
                 <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                   <Link to="/admin/logs">
                     <Settings className="mr-2 h-4 w-4 shrink-0" />
-                    Loggor
+                    Loggbok
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
