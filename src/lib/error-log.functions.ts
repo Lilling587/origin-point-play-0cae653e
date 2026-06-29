@@ -87,5 +87,17 @@ export const listErrorLogs = createServerFn({ method: "POST" })
     if (data.level) q = q.eq("level", data.level);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return { rows: (rows ?? []) as ErrorLogRow[] };
+    const mapped: ErrorLogRow[] = (rows ?? []).map((r) => ({
+      id: r.id as string,
+      created_at: r.created_at as string,
+      source: r.source as string,
+      level: r.level as string,
+      message: r.message as string,
+      route: (r.route as string | null) ?? null,
+      stack: (r.stack as string | null) ?? null,
+      context: r.context == null ? null : JSON.stringify(r.context),
+      user_agent: (r.user_agent as string | null) ?? null,
+      user_id: (r.user_id as string | null) ?? null,
+    }));
+    return { rows: mapped };
   });
