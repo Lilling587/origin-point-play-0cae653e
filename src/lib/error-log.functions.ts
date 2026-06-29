@@ -49,3 +49,43 @@ export const logError = createServerFn({ method: "POST" })
       return { ok: true, id: null };
     }
   });
+
+export type ErrorLogRow = {
+  id: string;
+  created_at: string;
+  source: string;
+  level: string;
+  message: string;
+  route: string | null;
+  stack: string | null;
+  context: unknown;
+  user_agent: string | null;
+  user_id: string | null;
+};
+
+export const listErrorLogs = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        limit: z.number().min(1).max(500).optional(),
+        level: z.enum(["error", "warn", "info"]).optional(),
+      })
+      .parse(input ?? {}),
+  )
+  .handler(async ({ data }): Promise<{ rows: ErrorLogRow[] }> => {
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
+    );
+    let q = supabaseAdmin
+      .from("error_log")
+      .select(
+        "id, created_at, source, level, message, route, stack, context, user_agent, user_id",
+      )
+      .order("created_at", { ascending: false })
+      .limit(data.limit ?? 100);
+    if (data.level) q = q.eq("level", data.level);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return { rows: (rows ?? []) as ErrorLogRow[] };
+  });
