@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireAdmin } from "@/integrations/supabase/admin-middleware";
 
 // Public endpoint — clients (signed-in or not) push structured errors here.
 // Writes use supabaseAdmin (service role) so we never expose INSERT via RLS.
