@@ -152,7 +152,7 @@ function LogsPage() {
                     ) : null}
                     {r.context ? (
                       <pre className="mt-2 overflow-x-auto rounded bg-muted/30 p-2 text-[11px] leading-relaxed">
-                        {JSON.stringify(r.context, null, 2)}
+                        {r.context}
                       </pre>
                     ) : null}
                   </CardContent>
