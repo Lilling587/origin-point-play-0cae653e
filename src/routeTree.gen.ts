@@ -21,6 +21,7 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as TvHomeAwayRouteImport } from './routes/tv.$home.$away'
 import { Route as AuthenticatedAdminLogosRouteImport } from './routes/_authenticated/admin.logos'
 import { Route as AuthenticatedAdminHealthRouteImport } from './routes/_authenticated/admin.health'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksPregameEmailsRouteImport } from './routes/api/public/hooks/pregame-emails'
 import { Route as ApiPublicHooksPostgameEmailsRouteImport } from './routes/api/public/hooks/postgame-emails'
 
@@ -85,6 +86,12 @@ const AuthenticatedAdminHealthRoute =
     path: '/admin/health',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksPregameEmailsRoute =
   ApiPublicHooksPregameEmailsRouteImport.update({
     id: '/api/public/hooks/pregame-emails',
@@ -112,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/tv/$home/$away': typeof TvHomeAwayRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
   '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -127,6 +135,7 @@ export interface FileRoutesByTo {
   '/tv/$home/$away': typeof TvHomeAwayRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
   '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -144,6 +153,7 @@ export interface FileRoutesById {
   '/tv/$home/$away': typeof TvHomeAwayRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
   '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +171,7 @@ export interface FileRouteTypes {
     | '/tv/$home/$away'
     | '/api/public/hooks/postgame-emails'
     | '/api/public/hooks/pregame-emails'
+    | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -176,6 +187,7 @@ export interface FileRouteTypes {
     | '/tv/$home/$away'
     | '/api/public/hooks/postgame-emails'
     | '/api/public/hooks/pregame-emails'
+    | '/lovable/email/queue/process'
   id:
     | '__root__'
     | '/'
@@ -192,6 +204,7 @@ export interface FileRouteTypes {
     | '/tv/$home/$away'
     | '/api/public/hooks/postgame-emails'
     | '/api/public/hooks/pregame-emails'
+    | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -206,6 +219,7 @@ export interface RootRouteChildren {
   TvHomeAwayRoute: typeof TvHomeAwayRoute
   ApiPublicHooksPostgameEmailsRoute: typeof ApiPublicHooksPostgameEmailsRoute
   ApiPublicHooksPregameEmailsRoute: typeof ApiPublicHooksPregameEmailsRoute
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -294,6 +308,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminHealthRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/pregame-emails': {
       id: '/api/public/hooks/pregame-emails'
       path: '/api/public/hooks/pregame-emails'
@@ -338,6 +359,7 @@ const rootRouteChildren: RootRouteChildren = {
   TvHomeAwayRoute: TvHomeAwayRoute,
   ApiPublicHooksPostgameEmailsRoute: ApiPublicHooksPostgameEmailsRoute,
   ApiPublicHooksPregameEmailsRoute: ApiPublicHooksPregameEmailsRoute,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
