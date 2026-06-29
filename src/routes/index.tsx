@@ -484,7 +484,7 @@ function Dashboard() {
           <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
             <TabsList className="hidden sm:flex w-full sm:w-auto">
               <TabsTrigger value="briefing" className="flex-1 sm:flex-initial">
-                Matchbriefing
+                Matchgenomgång
               </TabsTrigger>
               <TabsTrigger value="recap" className="flex-1 sm:flex-initial">
                 Postgame recap
@@ -572,7 +572,7 @@ function Dashboard() {
         <div className="mx-auto max-w-6xl px-4 py-2">
           <TabsList className="w-full">
             <TabsTrigger value="briefing" className="flex-1">
-              Matchbriefing
+              Matchgenomgång
             </TabsTrigger>
             <TabsTrigger value="recap" className="flex-1">
               Postgame recap
