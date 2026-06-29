@@ -487,7 +487,7 @@ function Dashboard() {
                 Matchgenomgång
               </TabsTrigger>
               <TabsTrigger value="recap" className="flex-1 sm:flex-initial">
-                Postgame recap
+                Matchsammanfattning
               </TabsTrigger>
             </TabsList>
             <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
@@ -575,7 +575,7 @@ function Dashboard() {
               Matchgenomgång
             </TabsTrigger>
             <TabsTrigger value="recap" className="flex-1">
-              Postgame recap
+              Matchsammanfattning
             </TabsTrigger>
           </TabsList>
         </div>
