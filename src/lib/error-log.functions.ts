@@ -58,7 +58,7 @@ export type ErrorLogRow = {
   message: string;
   route: string | null;
   stack: string | null;
-  context: Record<string, unknown> | null;
+  context: string | null;
   user_agent: string | null;
   user_id: string | null;
 };
