@@ -442,8 +442,8 @@ function RowUploadButton({
   team: string;
   onUploaded: (team: string, url: string) => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const inputId = `row-upload-${team.replace(/\s+/g, "-")}`;
 
   const handleFile = async (file: File) => {
     setBusy(true);
@@ -462,28 +462,31 @@ function RowUploadButton({
   return (
     <>
       <input
-        ref={inputRef}
+        id={inputId}
         type="file"
         accept="image/*"
-        className="hidden"
+        className="sr-only"
+        disabled={busy}
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) void handleFile(file);
           e.target.value = "";
         }}
       />
-      <Button
-        size="icon"
-        variant="outline"
+      <label
+        htmlFor={inputId}
         title="Ladda upp egen logga"
-        onClick={() => inputRef.current?.click()}
-        disabled={busy}
+        aria-label="Ladda upp egen logga"
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground ${
+          busy ? "pointer-events-none opacity-50" : "cursor-pointer"
+        }`}
       >
         <Upload className={`h-4 w-4 ${busy ? "animate-pulse" : ""}`} />
-      </Button>
+      </label>
     </>
   );
 }
+
 
 function StatusBadge({ status }: { status: TeamLogoStatus["status"] }) {
   if (status === "ok")
