@@ -263,6 +263,9 @@ function BulkUpload({
             Släpp filer här eller välj filer. Filnamn som matchar ett lagnamn
             (t.ex. <code>kallinge.png</code>) tilldelas automatiskt.
           </p>
+          <p className="text-xs text-muted-foreground">
+            Krav: bildfil (PNG, JPG, SVG eller WEBP), minst 128×128 px, max 5 MB.
+          </p>
           <input
             ref={inputRef}
             type="file"
@@ -475,8 +478,8 @@ function RowUploadButton({
       />
       <label
         htmlFor={inputId}
-        title="Ladda upp egen logga"
-        aria-label="Ladda upp egen logga"
+        title="Ladda upp egen logga (PNG/JPG/SVG/WEBP, minst 128×128 px, max 5 MB)"
+        aria-label="Ladda upp egen logga (PNG/JPG/SVG/WEBP, minst 128x128 px, max 5 MB)"
         className={`inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground ${
           busy ? "pointer-events-none opacity-50" : "cursor-pointer"
         }`}
