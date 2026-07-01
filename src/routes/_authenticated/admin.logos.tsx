@@ -263,6 +263,9 @@ function BulkUpload({
             Släpp filer här eller välj filer. Filnamn som matchar ett lagnamn
             (t.ex. <code>kallinge.png</code>) tilldelas automatiskt.
           </p>
+          <p className="text-xs text-muted-foreground">
+            Krav: bildfil (PNG, JPG, SVG eller WEBP), minst 128×128 px, max 5 MB.
+          </p>
           <input
             ref={inputRef}
             type="file"
