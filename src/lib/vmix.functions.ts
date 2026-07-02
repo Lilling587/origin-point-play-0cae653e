@@ -2,7 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
 import { DEFAULT_SEASON, getSeason } from "./seasons.config";
+
+type Json = Database["public"]["Tables"]["cached_briefings"]["Row"]["payload"];
+type StandingsJson = Json;
+
 
 const PlayerSchema = z.object({
   number: z.number().int().nullable(),
