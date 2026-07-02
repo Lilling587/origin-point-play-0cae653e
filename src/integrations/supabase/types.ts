@@ -398,6 +398,54 @@ export type Database = {
         }
         Relationships: []
       }
+      vmix_publications: {
+        Row: {
+          away_lineup_json: Json
+          away_team: string
+          game_date: string
+          home_lineup_json: Json
+          home_team: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          published_at: string
+          published_by: string | null
+          standings_json: Json
+          updated_at: string
+          venue: string | null
+        }
+        Insert: {
+          away_lineup_json?: Json
+          away_team: string
+          game_date: string
+          home_lineup_json?: Json
+          home_team: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          published_at?: string
+          published_by?: string | null
+          standings_json?: Json
+          updated_at?: string
+          venue?: string | null
+        }
+        Update: {
+          away_lineup_json?: Json
+          away_team?: string
+          game_date?: string
+          home_lineup_json?: Json
+          home_team?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          published_at?: string
+          published_by?: string | null
+          standings_json?: Json
+          updated_at?: string
+          venue?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
