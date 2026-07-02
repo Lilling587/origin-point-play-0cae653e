@@ -33,7 +33,7 @@ export type VmixPublicationRow = {
   homeTeam: string;
   awayTeam: string;
   venue: string | null;
-  standings: unknown[];
+  standings: StandingsJson;
   homeLineup: VmixLineupInput;
   awayLineup: VmixLineupInput;
   notes: string | null;
@@ -61,7 +61,7 @@ function mapRow(row: Record<string, unknown>): VmixPublicationRow {
     homeTeam: String(row.home_team),
     awayTeam: String(row.away_team),
     venue: (row.venue as string | null) ?? null,
-    standings: (row.standings_json as unknown[]) ?? [],
+    standings: (row.standings_json as StandingsJson) ?? [],
     homeLineup: row.home_lineup_json as VmixLineupInput,
     awayLineup: row.away_lineup_json as VmixLineupInput,
     notes: (row.notes as string | null) ?? null,
