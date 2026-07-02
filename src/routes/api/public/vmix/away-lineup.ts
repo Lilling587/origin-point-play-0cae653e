@@ -26,8 +26,8 @@ export const Route = createFileRoute("/api/public/vmix/away-lineup")({
                 away: pub.awayTeam,
                 venue: pub.venue,
               },
-              team: pub.awayTeam,
               ...pub.awayLineup,
+              team: pub.awayTeam,
             }
           : {
               published: false,
