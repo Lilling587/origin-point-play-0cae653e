@@ -19,10 +19,15 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as IndexIndexRouteImport } from './routes/index.index'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as TvHomeAwayRouteImport } from './routes/tv.$home.$away'
+import { Route as AuthenticatedAdminVmixRouteImport } from './routes/_authenticated/admin.vmix'
 import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated/admin.logs'
 import { Route as AuthenticatedAdminLogosRouteImport } from './routes/_authenticated/admin.logos'
 import { Route as AuthenticatedAdminHealthRouteImport } from './routes/_authenticated/admin.health'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicVmixStandingsRouteImport } from './routes/api/public/vmix/standings'
+import { Route as ApiPublicVmixHomeLineupRouteImport } from './routes/api/public/vmix/home-lineup'
+import { Route as ApiPublicVmixCurrentRouteImport } from './routes/api/public/vmix/current'
+import { Route as ApiPublicVmixAwayLineupRouteImport } from './routes/api/public/vmix/away-lineup'
 import { Route as ApiPublicHooksPregameEmailsRouteImport } from './routes/api/public/hooks/pregame-emails'
 import { Route as ApiPublicHooksPostgameEmailsRouteImport } from './routes/api/public/hooks/postgame-emails'
 
@@ -76,6 +81,11 @@ const TvHomeAwayRoute = TvHomeAwayRouteImport.update({
   path: '/tv/$home/$away',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminVmixRoute = AuthenticatedAdminVmixRouteImport.update({
+  id: '/admin/vmix',
+  path: '/admin/vmix',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminLogsRoute = AuthenticatedAdminLogsRouteImport.update({
   id: '/admin/logs',
   path: '/admin/logs',
@@ -98,6 +108,26 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicVmixStandingsRoute = ApiPublicVmixStandingsRouteImport.update({
+  id: '/api/public/vmix/standings',
+  path: '/api/public/vmix/standings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicVmixHomeLineupRoute = ApiPublicVmixHomeLineupRouteImport.update({
+  id: '/api/public/vmix/home-lineup',
+  path: '/api/public/vmix/home-lineup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicVmixCurrentRoute = ApiPublicVmixCurrentRouteImport.update({
+  id: '/api/public/vmix/current',
+  path: '/api/public/vmix/current',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicVmixAwayLineupRoute = ApiPublicVmixAwayLineupRouteImport.update({
+  id: '/api/public/vmix/away-lineup',
+  path: '/api/public/vmix/away-lineup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksPregameEmailsRoute =
   ApiPublicHooksPregameEmailsRouteImport.update({
     id: '/api/public/hooks/pregame-emails',
@@ -123,9 +153,14 @@ export interface FileRoutesByFullPath {
   '/admin/health': typeof AuthenticatedAdminHealthRoute
   '/admin/logos': typeof AuthenticatedAdminLogosRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/admin/vmix': typeof AuthenticatedAdminVmixRoute
   '/tv/$home/$away': typeof TvHomeAwayRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
   '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
+  '/api/public/vmix/away-lineup': typeof ApiPublicVmixAwayLineupRoute
+  '/api/public/vmix/current': typeof ApiPublicVmixCurrentRoute
+  '/api/public/vmix/home-lineup': typeof ApiPublicVmixHomeLineupRoute
+  '/api/public/vmix/standings': typeof ApiPublicVmixStandingsRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
@@ -140,9 +175,14 @@ export interface FileRoutesByTo {
   '/admin/health': typeof AuthenticatedAdminHealthRoute
   '/admin/logos': typeof AuthenticatedAdminLogosRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/admin/vmix': typeof AuthenticatedAdminVmixRoute
   '/tv/$home/$away': typeof TvHomeAwayRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
   '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
+  '/api/public/vmix/away-lineup': typeof ApiPublicVmixAwayLineupRoute
+  '/api/public/vmix/current': typeof ApiPublicVmixCurrentRoute
+  '/api/public/vmix/home-lineup': typeof ApiPublicVmixHomeLineupRoute
+  '/api/public/vmix/standings': typeof ApiPublicVmixStandingsRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
@@ -159,9 +199,14 @@ export interface FileRoutesById {
   '/_authenticated/admin/health': typeof AuthenticatedAdminHealthRoute
   '/_authenticated/admin/logos': typeof AuthenticatedAdminLogosRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/_authenticated/admin/vmix': typeof AuthenticatedAdminVmixRoute
   '/tv/$home/$away': typeof TvHomeAwayRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
   '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
+  '/api/public/vmix/away-lineup': typeof ApiPublicVmixAwayLineupRoute
+  '/api/public/vmix/current': typeof ApiPublicVmixCurrentRoute
+  '/api/public/vmix/home-lineup': typeof ApiPublicVmixHomeLineupRoute
+  '/api/public/vmix/standings': typeof ApiPublicVmixStandingsRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
@@ -178,9 +223,14 @@ export interface FileRouteTypes {
     | '/admin/health'
     | '/admin/logos'
     | '/admin/logs'
+    | '/admin/vmix'
     | '/tv/$home/$away'
     | '/api/public/hooks/postgame-emails'
     | '/api/public/hooks/pregame-emails'
+    | '/api/public/vmix/away-lineup'
+    | '/api/public/vmix/current'
+    | '/api/public/vmix/home-lineup'
+    | '/api/public/vmix/standings'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -195,9 +245,14 @@ export interface FileRouteTypes {
     | '/admin/health'
     | '/admin/logos'
     | '/admin/logs'
+    | '/admin/vmix'
     | '/tv/$home/$away'
     | '/api/public/hooks/postgame-emails'
     | '/api/public/hooks/pregame-emails'
+    | '/api/public/vmix/away-lineup'
+    | '/api/public/vmix/current'
+    | '/api/public/vmix/home-lineup'
+    | '/api/public/vmix/standings'
     | '/lovable/email/queue/process'
   id:
     | '__root__'
@@ -213,9 +268,14 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/health'
     | '/_authenticated/admin/logos'
     | '/_authenticated/admin/logs'
+    | '/_authenticated/admin/vmix'
     | '/tv/$home/$away'
     | '/api/public/hooks/postgame-emails'
     | '/api/public/hooks/pregame-emails'
+    | '/api/public/vmix/away-lineup'
+    | '/api/public/vmix/current'
+    | '/api/public/vmix/home-lineup'
+    | '/api/public/vmix/standings'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
@@ -231,6 +291,10 @@ export interface RootRouteChildren {
   TvHomeAwayRoute: typeof TvHomeAwayRoute
   ApiPublicHooksPostgameEmailsRoute: typeof ApiPublicHooksPostgameEmailsRoute
   ApiPublicHooksPregameEmailsRoute: typeof ApiPublicHooksPregameEmailsRoute
+  ApiPublicVmixAwayLineupRoute: typeof ApiPublicVmixAwayLineupRoute
+  ApiPublicVmixCurrentRoute: typeof ApiPublicVmixCurrentRoute
+  ApiPublicVmixHomeLineupRoute: typeof ApiPublicVmixHomeLineupRoute
+  ApiPublicVmixStandingsRoute: typeof ApiPublicVmixStandingsRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -306,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TvHomeAwayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/vmix': {
+      id: '/_authenticated/admin/vmix'
+      path: '/admin/vmix'
+      fullPath: '/admin/vmix'
+      preLoaderRoute: typeof AuthenticatedAdminVmixRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/logs': {
       id: '/_authenticated/admin/logs'
       path: '/admin/logs'
@@ -334,6 +405,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/vmix/standings': {
+      id: '/api/public/vmix/standings'
+      path: '/api/public/vmix/standings'
+      fullPath: '/api/public/vmix/standings'
+      preLoaderRoute: typeof ApiPublicVmixStandingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/vmix/home-lineup': {
+      id: '/api/public/vmix/home-lineup'
+      path: '/api/public/vmix/home-lineup'
+      fullPath: '/api/public/vmix/home-lineup'
+      preLoaderRoute: typeof ApiPublicVmixHomeLineupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/vmix/current': {
+      id: '/api/public/vmix/current'
+      path: '/api/public/vmix/current'
+      fullPath: '/api/public/vmix/current'
+      preLoaderRoute: typeof ApiPublicVmixCurrentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/vmix/away-lineup': {
+      id: '/api/public/vmix/away-lineup'
+      path: '/api/public/vmix/away-lineup'
+      fullPath: '/api/public/vmix/away-lineup'
+      preLoaderRoute: typeof ApiPublicVmixAwayLineupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/pregame-emails': {
       id: '/api/public/hooks/pregame-emails'
       path: '/api/public/hooks/pregame-emails'
@@ -356,6 +455,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminHealthRoute: typeof AuthenticatedAdminHealthRoute
   AuthenticatedAdminLogosRoute: typeof AuthenticatedAdminLogosRoute
   AuthenticatedAdminLogsRoute: typeof AuthenticatedAdminLogsRoute
+  AuthenticatedAdminVmixRoute: typeof AuthenticatedAdminVmixRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -363,6 +463,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminHealthRoute: AuthenticatedAdminHealthRoute,
   AuthenticatedAdminLogosRoute: AuthenticatedAdminLogosRoute,
   AuthenticatedAdminLogsRoute: AuthenticatedAdminLogsRoute,
+  AuthenticatedAdminVmixRoute: AuthenticatedAdminVmixRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -380,18 +481,12 @@ const rootRouteChildren: RootRouteChildren = {
   TvHomeAwayRoute: TvHomeAwayRoute,
   ApiPublicHooksPostgameEmailsRoute: ApiPublicHooksPostgameEmailsRoute,
   ApiPublicHooksPregameEmailsRoute: ApiPublicHooksPregameEmailsRoute,
+  ApiPublicVmixAwayLineupRoute: ApiPublicVmixAwayLineupRoute,
+  ApiPublicVmixCurrentRoute: ApiPublicVmixCurrentRoute,
+  ApiPublicVmixHomeLineupRoute: ApiPublicVmixHomeLineupRoute,
+  ApiPublicVmixStandingsRoute: ApiPublicVmixStandingsRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
