@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as IndexIndexRouteImport } from './routes/index.index'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as TvHomeAwayRouteImport } from './routes/tv.$home.$away'
+import { Route as AuthenticatedAdminVmixRouteImport } from './routes/_authenticated/admin.vmix'
 import { Route as AuthenticatedAdminLogsRouteImport } from './routes/_authenticated/admin.logs'
 import { Route as AuthenticatedAdminLogosRouteImport } from './routes/_authenticated/admin.logos'
 import { Route as AuthenticatedAdminHealthRouteImport } from './routes/_authenticated/admin.health'
@@ -79,6 +80,11 @@ const TvHomeAwayRoute = TvHomeAwayRouteImport.update({
   id: '/tv/$home/$away',
   path: '/tv/$home/$away',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminVmixRoute = AuthenticatedAdminVmixRouteImport.update({
+  id: '/admin/vmix',
+  path: '/admin/vmix',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminLogsRoute = AuthenticatedAdminLogsRouteImport.update({
   id: '/admin/logs',
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/admin/health': typeof AuthenticatedAdminHealthRoute
   '/admin/logos': typeof AuthenticatedAdminLogosRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/admin/vmix': typeof AuthenticatedAdminVmixRoute
   '/tv/$home/$away': typeof TvHomeAwayRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
   '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
@@ -168,6 +175,7 @@ export interface FileRoutesByTo {
   '/admin/health': typeof AuthenticatedAdminHealthRoute
   '/admin/logos': typeof AuthenticatedAdminLogosRoute
   '/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/admin/vmix': typeof AuthenticatedAdminVmixRoute
   '/tv/$home/$away': typeof TvHomeAwayRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
   '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/health': typeof AuthenticatedAdminHealthRoute
   '/_authenticated/admin/logos': typeof AuthenticatedAdminLogosRoute
   '/_authenticated/admin/logs': typeof AuthenticatedAdminLogsRoute
+  '/_authenticated/admin/vmix': typeof AuthenticatedAdminVmixRoute
   '/tv/$home/$away': typeof TvHomeAwayRoute
   '/api/public/hooks/postgame-emails': typeof ApiPublicHooksPostgameEmailsRoute
   '/api/public/hooks/pregame-emails': typeof ApiPublicHooksPregameEmailsRoute
@@ -214,6 +223,7 @@ export interface FileRouteTypes {
     | '/admin/health'
     | '/admin/logos'
     | '/admin/logs'
+    | '/admin/vmix'
     | '/tv/$home/$away'
     | '/api/public/hooks/postgame-emails'
     | '/api/public/hooks/pregame-emails'
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/admin/health'
     | '/admin/logos'
     | '/admin/logs'
+    | '/admin/vmix'
     | '/tv/$home/$away'
     | '/api/public/hooks/postgame-emails'
     | '/api/public/hooks/pregame-emails'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/health'
     | '/_authenticated/admin/logos'
     | '/_authenticated/admin/logs'
+    | '/_authenticated/admin/vmix'
     | '/tv/$home/$away'
     | '/api/public/hooks/postgame-emails'
     | '/api/public/hooks/pregame-emails'
@@ -358,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TvHomeAwayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/vmix': {
+      id: '/_authenticated/admin/vmix'
+      path: '/admin/vmix'
+      fullPath: '/admin/vmix'
+      preLoaderRoute: typeof AuthenticatedAdminVmixRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/logs': {
       id: '/_authenticated/admin/logs'
       path: '/admin/logs'
@@ -436,6 +455,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminHealthRoute: typeof AuthenticatedAdminHealthRoute
   AuthenticatedAdminLogosRoute: typeof AuthenticatedAdminLogosRoute
   AuthenticatedAdminLogsRoute: typeof AuthenticatedAdminLogsRoute
+  AuthenticatedAdminVmixRoute: typeof AuthenticatedAdminVmixRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -443,6 +463,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminHealthRoute: AuthenticatedAdminHealthRoute,
   AuthenticatedAdminLogosRoute: AuthenticatedAdminLogosRoute,
   AuthenticatedAdminLogsRoute: AuthenticatedAdminLogsRoute,
+  AuthenticatedAdminVmixRoute: AuthenticatedAdminVmixRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
